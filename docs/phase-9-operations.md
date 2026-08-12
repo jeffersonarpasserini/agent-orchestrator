@@ -76,10 +76,10 @@ Autorização para uma operação não se transfere para outra.
 - [x] Matriz de aprovação humana definida.
 - [x] Baseline Git e tag `v0.1.0-rc1` criados.
 - [x] Limites da API aplicados e medidos.
-- [ ] Monitor HTTP do Phoenix cadastrado no Uptime Kuma.
+- [x] Monitor HTTP do Phoenix cadastrado no Uptime Kuma.
 - [x] Backup completo pós-Fase 8 restaurado.
 - [x] Revisão final de permissões concluída.
-- [ ] Decisão operacional final registrada.
+- [x] Decisão operacional final registrada.
 
 ## Evidências da primeira janela
 
@@ -106,9 +106,11 @@ Phoenix permanece como ferramenta de traces, diagnóstico e avaliação. A
 documentação oficial da versão self-hosted não estabelece um mecanismo próprio
 de alertas operacionais; por isso, disponibilidade HTTP é monitorada no Uptime
 Kuma. O monitor `Agent Orchestrator API` (ID 8) está ativo, consulta
-`/health/ready` a cada 60 segundos. O monitor equivalente da UI Phoenix ainda
-precisa ser criado pela interface autenticada do Kuma; o banco SQLite do Kuma
-não será alterado diretamente.
+`/health/ready` a cada 60 segundos. O monitor `Phoenix` (ID 10) consulta
+`http://phoenix:6006` no mesmo intervalo. Ambos estão vinculados ao canal ativo
+e padrão `Phoenix Notification` (ID 1).
 
-Critério para fechar o gate: monitor HTTP ativo para `http://phoenix:6006`, com
-notificação vinculada e um teste controlado de falha/recuperação registrado.
+Em 2026-08-12, os dois monitores registraram `200 OK`: API entre 11 e 15 ms e
+Phoenix em 3 ms. A arquitetura foi marcada operacional com esses gates
+atendidos. O teste deliberado de falha e recuperação será executado na próxima
+janela de manutenção para não interromper os serviços fora dela.

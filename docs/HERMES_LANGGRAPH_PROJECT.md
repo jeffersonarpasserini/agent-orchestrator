@@ -515,14 +515,14 @@ justifique adicionar Wesley, Dax ou Scotty antes da preparação operacional.
 
 - [x] Congelar versões e gerar changelog.
 - [x] Criar runbook de incidentes.
-- [ ] Criar alertas no Uptime Kuma e Phoenix.
+- [x] Criar alertas no Uptime Kuma para API e Phoenix.
 - [x] Definir SLOs e janela de manutenção.
 - [x] Revisar backups e restauração completa.
 - [x] Revisar permissões Docker e filesystem.
 - [x] Definir política de atualização de modelos.
 - [x] Definir teto mensal DeepSeek.
 - [x] Homologar aprovação humana.
-- [ ] Marcar a arquitetura como operacional.
+- [x] Marcar a arquitetura como operacional.
 
 ### Fase 10 — Piloto OpenObserve no homelab
 

@@ -4,6 +4,10 @@
 
 Primeira release candidata operacional do Agent Orchestrator.
 
+Após o congelamento da candidata, os monitores HTTP da API e do Phoenix foram
+vinculados ao canal padrão ativo do Uptime Kuma, concluindo o gate operacional
+da Fase 9 sem mover a tag RC1.
+
 ### Incluído
 
 - API FastAPI local com readiness PostgreSQL e healthchecks;
