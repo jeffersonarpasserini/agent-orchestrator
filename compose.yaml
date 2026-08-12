@@ -1,0 +1,155 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: agent-orchestrator:0.1.0
+    restart: unless-stopped
+    env_file:
+      - path: .env
+        required: true
+    environment:
+      OTEL_SERVICE_NAME: agent-orchestrator
+      HERMES_PROFILES_ROOT: /hermes-state
+    ports:
+      - "127.0.0.1:8088:8088"
+    networks:
+      - default
+      - homelab-data
+    depends_on:
+      phoenix:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8088/health/ready', timeout=2).read()",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 10s
+    read_only: true
+    volumes:
+      - type: bind
+        source: ${HERMES_PROFILES_ROOT}/barclay/state.db
+        target: /hermes-state/barclay/state.db
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${HERMES_PROFILES_ROOT}/barclay/state.db-wal
+        target: /hermes-state/barclay/state.db-wal
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${HERMES_PROFILES_ROOT}/barclay/state.db-shm
+        target: /hermes-state/barclay/state.db-shm
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${HERMES_PROFILES_ROOT}/obrien/state.db
+        target: /hermes-state/obrien/state.db
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${HERMES_PROFILES_ROOT}/obrien/state.db-wal
+        target: /hermes-state/obrien/state.db-wal
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${HERMES_PROFILES_ROOT}/obrien/state.db-shm
+        target: /hermes-state/obrien/state.db-shm
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${HERMES_PROFILES_ROOT}/rutherford/state.db
+        target: /hermes-state/rutherford/state.db
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${HERMES_PROFILES_ROOT}/rutherford/state.db-wal
+        target: /hermes-state/rutherford/state.db-wal
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${HERMES_PROFILES_ROOT}/rutherford/state.db-shm
+        target: /hermes-state/rutherford/state.db-shm
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${HERMES_PROFILES_ROOT}/tuvok/state.db
+        target: /hermes-state/tuvok/state.db
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${HERMES_PROFILES_ROOT}/tuvok/state.db-wal
+        target: /hermes-state/tuvok/state.db-wal
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${HERMES_PROFILES_ROOT}/tuvok/state.db-shm
+        target: /hermes-state/tuvok/state.db-shm
+        read_only: true
+        bind:
+          create_host_path: false
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+    cap_drop:
+      - ALL
+    pids_limit: 256
+    mem_limit: 512m
+    cpus: 1.0
+    security_opt:
+      - no-new-privileges:true
+
+  phoenix:
+    image: arizephoenix/phoenix:version-19.4.0-nonroot
+    restart: unless-stopped
+    environment:
+      PHOENIX_POSTGRES_HOST: shared-postgres
+      PHOENIX_POSTGRES_PORT: "5432"
+      PHOENIX_POSTGRES_USER: agent_orchestrator
+      PHOENIX_POSTGRES_PASSWORD: ${ORCHESTRATOR_DB_PASSWORD}
+      PHOENIX_POSTGRES_DB: agent_orchestrator
+      PHOENIX_SQL_DATABASE_SCHEMA: phoenix
+      PHOENIX_DEFAULT_RETENTION_POLICY_DAYS: "30"
+      PHOENIX_ALLOW_EXTERNAL_RESOURCES: "false"
+    ports:
+      - "127.0.0.1:6006:6006"
+      - "127.0.0.1:4317:4317"
+    networks:
+      - default
+      - homelab-data
+    healthcheck:
+      test: ["CMD", "/usr/bin/python3.13", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:6006/', timeout=2).read()"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    read_only: true
+    tmpfs:
+      - /tmp:size=128m,mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 512
+    mem_limit: 2g
+    cpus: 2.0
+
+networks:
+  homelab-data:
+    external: true

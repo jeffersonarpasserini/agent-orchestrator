@@ -1,0 +1,47 @@
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+auth.json
+honcho.json
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.venv/
+venv/
+dist/
+build/
+*.egg-info/
+
+# Runtime state and databases
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+checkpoints/
+sessions/
+traces/
+logs/
+backups/
+
+# Tooling and editor files
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.tmp
+*.orig
+
+# Graphify generated output
+graphify-out/
