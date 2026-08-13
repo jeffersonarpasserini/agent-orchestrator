@@ -24,15 +24,15 @@ solicitante não pode substituir a matriz.
 
 ## Estado de homologação
 
-O contrato está congelado, mas O4 permanece `NO-GO` até a API possuir:
+O contrato e a implementação versionada estão prontos, mas O4 permanece
+`NO-GO` no runtime até a API possuir:
 
-- autenticação que produza identidade confiável sem aceitar identidade do
-  próprio payload;
-- armazenamento PostgreSQL para envelope, hash canônico e eventos de estado;
-- conflito `409` para reutilização de `request_id` com conteúdo diferente;
-- resposta idempotente para repetição byte-equivalente;
-- testes de rejeição, cancelamento e retomada sem reutilizar aprovação.
+- migration `0007_task_intake` aplicada;
+- bearer token gerado e instalado sem exposição;
+- principal e origem confiáveis configurados no servidor;
+- deploy controlado da API e smoke real de autenticação, idempotência,
+  conflito, cancelamento e retomada.
 
-A implementação requer migration e deploy, ambos sujeitos a aprovação
-específica conforme a matriz. Um armazenamento apenas em memória não atende o
-gate de auditoria e não deve ser promovido como atalho.
+A ativação requer migration, credencial e deploy, todos sujeitos a aprovação
+específica conforme a matriz. Sem as três variáveis confiáveis, o endpoint
+retorna `503` e não aceita tarefas em memória.

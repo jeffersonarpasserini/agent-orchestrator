@@ -38,6 +38,14 @@ class SettingsTest(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, "include a timezone"):
                 Settings.from_env()
 
+    def test_task_intake_is_disabled_without_server_identity(self):
+        with patch.dict(os.environ, self.valid_environment, clear=True):
+            settings = Settings.from_env()
+
+        self.assertEqual(settings.task_intake_bearer_token, "")
+        self.assertEqual(settings.task_intake_principal, "")
+        self.assertEqual(settings.task_intake_origin, "")
+
 
 if __name__ == "__main__":
     unittest.main()
