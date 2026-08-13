@@ -43,4 +43,3 @@ ou segredo em log resulta em `NO-GO`, restauração imediata e incidente.
 | Phoenix saudável | pendente | healthcheck e HTTP 200 |
 | recovery entregue | pendente | confirmação humana |
 | trace smoke | pendente | request/session ID sem segredo |
-

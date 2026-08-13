@@ -19,3 +19,11 @@ declaração de conclusão.
 
 Os kill switches financeiro e operacional devem ser testados sem chamada paga:
 reserva em `off`/kill switch ativo e recusa de tarefa sem autorização material.
+
+## Evidência de exercício sem custo
+
+Em 2026-08-13, a suíte confirmou que o modo padrão da reserva permanece `off`
+com kill switch ativo, que shadow mode nunca permite chamada ao provider e que
+grant ausente, expirado, reutilizado ou fora de escopo é recusado. Os testes
+usam providers falsos e não realizam chamada paga. Resultado: `GO` para os kill
+switches; a matriz completa ainda depende da homologação O4.

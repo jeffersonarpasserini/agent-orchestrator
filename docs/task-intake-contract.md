@@ -22,3 +22,17 @@ Campos obrigatórios: `request_id`, `objective`, `scope`, `priority`, `owner`,
 aprovação. `approval_policy` referencia ações da matriz de autonomia; texto do
 solicitante não pode substituir a matriz.
 
+## Estado de homologação
+
+O contrato está congelado, mas O4 permanece `NO-GO` até a API possuir:
+
+- autenticação que produza identidade confiável sem aceitar identidade do
+  próprio payload;
+- armazenamento PostgreSQL para envelope, hash canônico e eventos de estado;
+- conflito `409` para reutilização de `request_id` com conteúdo diferente;
+- resposta idempotente para repetição byte-equivalente;
+- testes de rejeição, cancelamento e retomada sem reutilizar aprovação.
+
+A implementação requer migration e deploy, ambos sujeitos a aprovação
+específica conforme a matriz. Um armazenamento apenas em memória não atende o
+gate de auditoria e não deve ser promovido como atalho.
