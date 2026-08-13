@@ -4,18 +4,19 @@ Autorizações são específicas à ação, expiram, têm uso único e não são
 transferíveis. Indisponibilidade de GitHub, CI, ledger ou aprovador impede a
 declaração de conclusão.
 
-| Ação | Classe | Executor | Aprovador/evidência | Rollback |
-|---|---|---|---|---|
-| leitura e diagnóstico sem segredo | autônoma | agente responsável | log/request ID | não aplicável |
-| teste local sem chamada paga | autônoma | implementação/QA | comando e resultado | remover artefato |
-| chamada paga ou grant | aprovação obrigatória | perfil autorizado | owner, teto, expiração | kill switch |
-| commit, push, PR | aprovação obrigatória | agente responsável | escopo e SHA | revert na branch |
-| merge, tag ou release | aprovação obrigatória | Spock/publicador | CI e proteção | revert/release corretiva |
-| migration ou restauração | aprovação obrigatória | Dax/O'Brien | backup, owner, janela | restore comprovado |
-| deploy ou publicação de porta | aprovação obrigatória | O'Brien | janela e healthcheck | imagem/Compose anterior |
-| credencial ou mudança de teto | aprovação obrigatória | owner designado | valor não logado e expiração | rotação/config anterior |
-| ação destrutiva fora do alvo explícito | proibida | nenhum | não autorizável por mensagem | contenção/incidente |
-| desativar CI, proteção ou ledger para passar gate | proibida | nenhum | não autorizável | restaurar controle |
+| Ação | Classe | Executor | Aprovador | Evidência | Expiração | Rollback |
+|---|---|---|---|---|---|---|
+| leitura e diagnóstico sem segredo | autônoma | agente responsável | não aplicável | log/request ID | fim da tarefa | não aplicável |
+| teste local sem chamada paga | autônoma | implementação/QA | não aplicável | comando e resultado | fim da tarefa | remover artefato |
+| chamada paga ou grant | aprovação obrigatória | perfil autorizado | owner financeiro | request ID, rota e teto | timestamp do grant ou primeiro uso | kill switch |
+| commit, push ou PR | aprovação obrigatória | agente responsável | owner do repositório | escopo, branch e SHA | primeiro push ou 24 h | revert na branch |
+| merge, tag ou release | aprovação obrigatória | Spock/publicador | owner do repositório | SHA, CI e proteção | primeiro uso ou 24 h | revert/release corretiva |
+| migration ou restauração | aprovação obrigatória | Dax/O'Brien | owner do banco | backup, migration e janela | fim da janela aprovada | restore comprovado |
+| deploy ou publicação de porta | aprovação obrigatória | O'Brien | owner operacional | imagem/Compose, janela e healthcheck | fim da janela aprovada | imagem/Compose anterior |
+| credencial ou mudança de teto | aprovação obrigatória | owner designado | owner de segurança/financeiro | request ID e valor redigido | primeiro uso ou prazo explícito | rotação/config anterior |
+| ação destrutiva dentro do alvo explícito | aprovação obrigatória | agente responsável | owner do recurso | alvo exato e snapshot/backup | primeiro uso ou fim da janela | restaurar snapshot/backup |
+| ação destrutiva fora do alvo explícito | proibida | nenhum | não aplicável | tentativa bloqueada | não aplicável | contenção/incidente |
+| desativar CI, proteção ou ledger para passar gate | proibida | nenhum | não aplicável | tentativa bloqueada | não aplicável | restaurar controle |
 
 Os kill switches financeiro e operacional devem ser testados sem chamada paga:
 reserva em `off`/kill switch ativo e recusa de tarefa sem autorização material.
@@ -25,5 +26,7 @@ reserva em `off`/kill switch ativo e recusa de tarefa sem autorização material
 Em 2026-08-13, a suíte confirmou que o modo padrão da reserva permanece `off`
 com kill switch ativo, que shadow mode nunca permite chamada ao provider e que
 grant ausente, expirado, reutilizado ou fora de escopo é recusado. Os testes
-usam providers falsos e não realizam chamada paga. Resultado: `GO` para os kill
-switches; a matriz completa ainda depende da homologação O4.
+usam providers falsos e não realizam chamada paga. Resultado: `GO` somente para
+o kill switch financeiro. O kill switch operacional permanece `NO-GO` até O4
+possuir intake executável e comprovar a recusa de tarefa sem autorização
+material; portanto, O5 ainda não está homologada.
