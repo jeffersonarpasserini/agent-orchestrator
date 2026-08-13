@@ -31,10 +31,12 @@ humana aplicável.
 
 ## Instalação operacional
 
-O script global do Hermes é um link simbólico para a cópia versionada. O job
-pertence ao perfil `spock`, usa o diretório deste projeto e entrega eventos
-localmente. O estado do hash é durável no scheduler, permitindo retomada após
-reinício do gateway.
+O script do perfil Hermes é uma cópia regular, modo `0700`, da versão mantida
+neste repositório; links simbólicos externos são rejeitados pelo sandbox do
+scheduler. Atualizações devem reinstalar a cópia e confirmar SHA-256 idêntico.
+O job pertence ao perfil `spock`, usa o diretório deste projeto e entrega
+eventos localmente. O estado do hash é durável no scheduler, permitindo
+retomada após reinício do gateway.
 
 Para auditar:
 
