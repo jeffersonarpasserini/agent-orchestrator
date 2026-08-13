@@ -19,6 +19,22 @@ from orchestrator.reserve_budget import (
 
 
 MILLION = Decimal("1000000")
+_ALLOWED_DEEPSEEK_PATHS = {"/chat/completions", "/user/balance"}
+
+
+def _require_allowed_deepseek_url(url: str) -> None:
+    parsed = urlparse(url)
+    if (
+        parsed.scheme != "https"
+        or parsed.netloc != "api.deepseek.com"
+        or parsed.path not in _ALLOWED_DEEPSEEK_PATHS
+        or parsed.params
+        or parsed.query
+        or parsed.fragment
+        or parsed.username
+        or parsed.password
+    ):
+        raise ValueError("DeepSeek URL is not allowed")
 
 
 class JsonTransport(Protocol):
@@ -27,8 +43,10 @@ class JsonTransport(Protocol):
 
 class UrllibJsonTransport:
     def get_json(self, url: str, headers: Mapping[str, str], timeout: float) -> object:
+        _require_allowed_deepseek_url(url)
         request = Request(url, headers=dict(headers), method="GET")
-        with urlopen(request, timeout=timeout) as response:
+        # URL is constrained above to HTTPS and the exact provider host/path.
+        with urlopen(request, timeout=timeout) as response:  # nosec B310
             if response.status != 200:
                 raise ReserveBudgetEvidenceError("DeepSeek balance endpoint unavailable")
             return json.loads(response.read())
@@ -46,13 +64,15 @@ class UrllibJsonPostTransport:
         self, url: str, headers: Mapping[str, str], payload: Mapping[str, object],
         timeout: float,
     ) -> object:
+        _require_allowed_deepseek_url(url)
         request = Request(
             url,
             headers=dict(headers),
             data=json.dumps(payload).encode("utf-8"),
             method="POST",
         )
-        with urlopen(request, timeout=timeout) as response:
+        # URL is constrained above to HTTPS and the exact provider host/path.
+        with urlopen(request, timeout=timeout) as response:  # nosec B310
             if response.status != 200:
                 raise ReserveOutcomeUnknownError(
                     "DeepSeek reserve request outcome is unknown"
