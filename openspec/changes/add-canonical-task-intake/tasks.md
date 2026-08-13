@@ -15,6 +15,7 @@
 
 - [x] 3.1 Cobrir validação, autenticação, idempotência e conflito
 - [x] 3.2 Cobrir cancelamento, retomada e aprovação não transferível
-- [ ] 3.3 Revisão independente de Tuvok
+- [x] 3.3 Revisão independente de Tuvok (`GO`, sessão
+  `20260813_192345_ccd2f5`)
 - [x] 3.4 Aplicar migration e executar smoke somente com aprovação
 - [x] 3.5 Executar CI, observabilidade e rollback testado
