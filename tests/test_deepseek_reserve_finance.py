@@ -13,6 +13,8 @@ from orchestrator.deepseek_reserve_finance import (
     ReserveCostCommitment,
     ReserveOutcomeUnknownError,
     ReserveProviderResult,
+    UrllibJsonPostTransport,
+    UrllibJsonTransport,
 )
 from orchestrator.reserve_budget import (
     ReserveBudgetEvidenceError,
@@ -41,6 +43,21 @@ class FakePostTransport:
         if self.error:
             raise self.error
         return self.payload
+
+
+class DeepSeekTransportSafetyTest(unittest.TestCase):
+    def test_transports_reject_urls_outside_exact_provider_routes(self):
+        invalid_urls = (
+            "http://api.deepseek.com/user/balance",
+            "https://evil.example/user/balance",
+            "https://api.deepseek.com/unknown",
+            "https://api.deepseek.com/user/balance?redirect=evil",
+        )
+        for url in invalid_urls:
+            with self.subTest(url=url), self.assertRaisesRegex(ValueError, "not allowed"):
+                UrllibJsonTransport().get_json(url, {}, 1)
+            with self.subTest(url=url), self.assertRaisesRegex(ValueError, "not allowed"):
+                UrllibJsonPostTransport().post_json(url, {}, {}, 1)
 
 
 class DeepSeekDirectBalanceReaderTest(unittest.TestCase):

@@ -41,6 +41,7 @@ Baselines e critérios:
 - [Resultados da validação de provedores](docs/phase-1-provider-results.md)
 - [Critérios objetivos do piloto](docs/pilot-acceptance-criteria.md)
 - [Checklist de tarefa do piloto](docs/pilot-task-checklist.md)
+- [Monitor persistente de PR e CI do Spock](docs/spock-github-ci-monitor.md)
 - [Operação do banco](docs/database-operations.md)
 - [Operação da stack](docs/operations.md)
 - [Adaptador Hermes CLI](docs/hermes-adapter.md)
