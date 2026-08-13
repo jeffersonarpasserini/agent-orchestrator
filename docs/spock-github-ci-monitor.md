@@ -8,9 +8,12 @@ de `jeffersonarpasserini/agent-orchestrator` e emite JSON estável com:
 - checks observados e checks obrigatórios ausentes;
 - resultado agregado `pending`, `failure` ou `success`.
 
-O scheduler Hermes executa a consulta a cada dois minutos. O modo
-`monitor-script` conserva o último hash e só chama o modelo do Spock quando o
-snapshot muda. Polling sem mudança não consome chamada de modelo.
+O scheduler Hermes executa a consulta a cada dois minutos. O próprio monitor
+persiste repositório, PR, SHA, checks esperados e resultado no notepad durável
+antes de iniciar o ambiente isolado do agente. O modo `monitor-script` conserva
+o último hash e só chama o modelo do Spock quando o snapshot muda. Polling sem
+mudança não consome chamada de modelo. Falha ao persistir o notepad aparece no
+snapshot como `notepad_error` e impede declaração de conclusão.
 
 ## Checks esperados
 
