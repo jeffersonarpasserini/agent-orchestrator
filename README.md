@@ -42,6 +42,7 @@ Baselines e critérios:
 - [Critérios objetivos do piloto](docs/pilot-acceptance-criteria.md)
 - [Checklist de tarefa do piloto](docs/pilot-task-checklist.md)
 - [Monitor persistente de PR e CI do Spock](docs/spock-github-ci-monitor.md)
+- [Handoff para entrada em operação](docs/operations-handoff-2026-08-13.md)
 - [Operação do banco](docs/database-operations.md)
 - [Operação da stack](docs/operations.md)
 - [Adaptador Hermes CLI](docs/hermes-adapter.md)
