@@ -43,8 +43,23 @@ O contrato e a implementação estão ativos no runtime desde 2026-08-13:
 - workflow smoke sem modelo concluiu e API/Phoenix permaneceram `200 OK` nos
   monitores 8 e 10.
 
-Resultado operacional: aprovado. Resultado O4: `PENDING REVIEW`, pois a revisão
-independente de Tuvok ainda exige autorização para uma chamada paga. Sem as três
-variáveis confiáveis, o endpoint permanece fail-closed com `503` e não aceita
-tarefas em memória. O status só muda para `GO` após a revisão ser registrada e
-eventuais bloqueios serem resolvidos.
+Resultado operacional: aprovado. Resultado O4: `GO`, após revisão independente
+de Tuvok na sessão `20260813_192345_ccd2f5`. O revisor não encontrou achados
+críticos ou altos; os 9 testes locais relevantes passaram com Python 3.12. Sem
+as três variáveis confiáveis, o endpoint permanece fail-closed com `503` e não
+aceita tarefas em memória.
+
+Riscos residuais aceitos para a homologação:
+
+- o design afirma que prazos vencidos são rejeitados, enquanto a implementação
+  exige timezone, mas não rejeita uma data passada; a especificação normativa
+  não exige essa rejeição;
+- `rejected`, `resumed` e `blocked` possuem pequenas assimetrias entre o enum e
+  as transições atualmente alcançáveis;
+- erros inesperados de banco e infraestrutura retornam `503` genérico, reduzindo
+  o detalhe externo da causa raiz;
+- a execução dos testes foi confirmada pelo operador, pois o sandbox do revisor
+  não possuía o ambiente Python 3.12 reproduzível.
+
+O parecer não autoriza migration, credencial, deploy ou publicação. Essas ações
+continuam submetidas à matriz de autonomia e à decisão final de Spock.
