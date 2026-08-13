@@ -24,7 +24,7 @@ solicitante não pode substituir a matriz.
 
 ## Estado de homologação
 
-O contrato e a implementação estão homologados no runtime desde 2026-08-13:
+O contrato e a implementação estão ativos no runtime desde 2026-08-13:
 
 - migration `0007_task_intake` aplicada pelo papel `agent_orchestrator`;
 - bearer token aleatório de 256 bits instalado sem exposição, com `.env`
@@ -43,5 +43,8 @@ O contrato e a implementação estão homologados no runtime desde 2026-08-13:
 - workflow smoke sem modelo concluiu e API/Phoenix permaneceram `200 OK` nos
   monitores 8 e 10.
 
-Resultado O4: `GO`. Sem as três variáveis confiáveis, o endpoint permanece
-fail-closed com `503` e não aceita tarefas em memória.
+Resultado operacional: aprovado. Resultado O4: `PENDING REVIEW`, pois a revisão
+independente de Tuvok ainda exige autorização para uma chamada paga. Sem as três
+variáveis confiáveis, o endpoint permanece fail-closed com `503` e não aceita
+tarefas em memória. O status só muda para `GO` após a revisão ser registrada e
+eventuais bloqueios serem resolvidos.
