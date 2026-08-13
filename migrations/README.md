@@ -31,5 +31,5 @@ cobrado. A migration foi aplicada no homelab em 2026-08-12 após dump e
 restauração validados; a evidência está em `docs/database-operations.md`.
 
 `0007_task_intake.sql` cria as tabelas persistentes de tarefas e eventos para
-O4. Sua presença no repositório não autoriza aplicação; aplicar exige owner do
-banco, backup e janela conforme `docs/autonomy-matrix.md`.
+O4. Ela foi aplicada em 2026-08-13, após autorização específica e dump lógico
+protegido. A evidência está em `docs/database-operations.md`.

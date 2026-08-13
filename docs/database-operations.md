@@ -78,3 +78,20 @@ equivalente simulado.
 - confirmadas migrations `0001`–`0006`, 20 tarefas e totais financeiros do
   fechamento da Fase 8;
 - ambiente temporário removido após a validação.
+
+## Evidência da migration 0007
+
+Validação executada em 2026-08-13:
+
+- dump pré-migration: `agent_orchestrator-pre-0007-20260813.dump`, formato
+  custom, sem owner/ACL e modo `0600`;
+- SHA-256: `79872a0b3f6a940a81d8e2cde200276a33b3abbb3710f6cb9387234c18264278`;
+- catálogo do dump validado antes da aplicação;
+- migration `0007_task_intake` aplicada pelo papel `agent_orchestrator`;
+- tabelas `tasks` e `task_events` pertencem a `agent_orchestrator` e iniciaram
+  vazias;
+- smoke persistiu uma tarefa de custo zero e três eventos auditáveis;
+- replay idempotente não duplicou tarefa/evento e conflito preservou o original;
+- imagem anterior `f0044b…` foi exercitada com readiness saudável e endpoint O4
+  ausente; imagem O4 `00b404…` foi restaurada e voltou saudável;
+- PostgreSQL e Phoenix não foram reiniciados.

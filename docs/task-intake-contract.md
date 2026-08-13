@@ -24,15 +24,24 @@ solicitante não pode substituir a matriz.
 
 ## Estado de homologação
 
-O contrato e a implementação versionada estão prontos, mas O4 permanece
-`NO-GO` no runtime até a API possuir:
+O contrato e a implementação estão homologados no runtime desde 2026-08-13:
 
-- migration `0007_task_intake` aplicada;
-- bearer token gerado e instalado sem exposição;
-- principal e origem confiáveis configurados no servidor;
-- deploy controlado da API e smoke real de autenticação, idempotência,
-  conflito, cancelamento e retomada.
+- migration `0007_task_intake` aplicada pelo papel `agent_orchestrator`;
+- bearer token aleatório de 256 bits instalado sem exposição, com `.env`
+  em modo `0600`;
+- principal `jeffersonarpasserini` e origem `api:homelab` definidos pelo
+  servidor e observados na trilha persistente;
+- credencial inválida retornou `401`; intake desabilitado retornou `503`;
+- payload sem owner retornou `422` e nenhuma linha foi persistida;
+- criação retornou `201`, replay equivalente retornou a mesma tarefa com
+  `idempotent_replay=true` e conflito retornou `409`;
+- cancelamento e retomada produziram exatamente os eventos `cancelled` e
+  `resumed`; a tarefa terminou em `awaiting_approval`, sem herdar aprovação;
+- somente uma tarefa e três eventos foram persistidos, todos com custo zero;
+- rollback para a imagem anterior retornou readiness saudável e endpoint O4
+  ausente (`404`); a imagem O4 foi restaurada e voltou saudável;
+- workflow smoke sem modelo concluiu e API/Phoenix permaneceram `200 OK` nos
+  monitores 8 e 10.
 
-A ativação requer migration, credencial e deploy, todos sujeitos a aprovação
-específica conforme a matriz. Sem as três variáveis confiáveis, o endpoint
-retorna `503` e não aceita tarefas em memória.
+Resultado O4: `GO`. Sem as três variáveis confiáveis, o endpoint permanece
+fail-closed com `503` e não aceita tarefas em memória.

@@ -5,7 +5,7 @@
 
 ## 2. Implementação
 
-- [ ] 2.1 Obter aprovação específica para migration e credencial
+- [x] 2.1 Obter aprovação específica para migration, credencial e deploy
 - [x] 2.2 Criar migration `0007_task_intake.sql`
 - [x] 2.3 Implementar store transacional e hash canônico
 - [x] 2.4 Implementar autenticação e endpoints de entrada/estado
@@ -16,5 +16,5 @@
 - [x] 3.1 Cobrir validação, autenticação, idempotência e conflito
 - [x] 3.2 Cobrir cancelamento, retomada e aprovação não transferível
 - [ ] 3.3 Revisão independente de Tuvok
-- [ ] 3.4 Aplicar migration e executar smoke somente com aprovação
-- [ ] 3.5 Executar CI, observabilidade e rollback testado
+- [x] 3.4 Aplicar migration e executar smoke somente com aprovação
+- [x] 3.5 Executar CI, observabilidade e rollback testado

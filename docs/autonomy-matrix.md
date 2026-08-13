@@ -26,7 +26,11 @@ reserva em `off`/kill switch ativo e recusa de tarefa sem autorização material
 Em 2026-08-13, a suíte confirmou que o modo padrão da reserva permanece `off`
 com kill switch ativo, que shadow mode nunca permite chamada ao provider e que
 grant ausente, expirado, reutilizado ou fora de escopo é recusado. Os testes
-usam providers falsos e não realizam chamada paga. Resultado: `GO` somente para
-o kill switch financeiro. O kill switch operacional permanece `NO-GO` até O4
-possuir intake executável e comprovar a recusa de tarefa sem autorização
-material; portanto, O5 ainda não está homologada.
+usam providers falsos e não realizam chamada paga. Resultado: `GO` para o kill
+switch financeiro.
+
+Em 2026-08-13, o kill switch operacional foi exercitado removendo somente a
+credencial do intake e recriando a API. Uma tarefa de custo zero recebeu `503`,
+nenhuma linha foi persistida e readiness continuou saudável. A configuração
+foi restaurada, o replay autenticado voltou a funcionar e os monitores 8 e 10
+permaneceram em `200 OK`. Resultado O5: `GO`.
