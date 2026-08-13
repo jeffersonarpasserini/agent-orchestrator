@@ -1,9 +1,12 @@
 from __future__ import annotations
 
 from contextlib import asynccontextmanager
+from dataclasses import asdict
+import hmac
 from typing import Callable
 
-from fastapi import FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from opentelemetry.trace import Status, StatusCode
 from pydantic import BaseModel
 
@@ -13,6 +16,14 @@ from orchestrator.graphs.smoke import run_smoke_workflow
 from orchestrator.pilot_metrics import PostgresPilotMetricsStore
 from orchestrator.pilot_summary import summarize_pilot
 from orchestrator.settings import Settings
+from orchestrator.task_intake import (
+    InvalidTaskTransitionError,
+    PostgresTaskStore,
+    TaskConflictError,
+    TaskEnvelope,
+    TaskNotFoundError,
+    TaskStore,
+)
 from orchestrator.telemetry import get_tracer
 
 
@@ -25,6 +36,7 @@ def create_app(
     *,
     budget_guard: DeepSeekBudgetGuard | None = None,
     metrics_store: PostgresPilotMetricsStore | None = None,
+    task_store: TaskStore | None = None,
     database_checker: Callable[[Settings], dict[str, str]] = check_database,
 ) -> FastAPI:
     guard = budget_guard or DeepSeekBudgetGuard(
@@ -34,6 +46,30 @@ def create_app(
         pilot_started_at=settings.deepseek_pilot_started_at,
     )
     store = metrics_store or PostgresPilotMetricsStore(settings.database_url)
+    intake_store = task_store or PostgresTaskStore(settings.database_url)
+    bearer = HTTPBearer(auto_error=False)
+
+    def authenticated_principal(
+        credentials: HTTPAuthorizationCredentials | None = Depends(bearer),
+    ) -> str:
+        configured = settings.task_intake_bearer_token
+        if (
+            not configured
+            or not settings.task_intake_principal
+            or not settings.task_intake_origin
+        ):
+            raise HTTPException(status_code=503, detail="task intake unavailable")
+        if (
+            credentials is None
+            or credentials.scheme.lower() != "bearer"
+            or not hmac.compare_digest(credentials.credentials, configured)
+        ):
+            raise HTTPException(
+                status_code=401,
+                detail="invalid task intake credential",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        return settings.task_intake_principal
 
     @asynccontextmanager
     async def lifespan(_: FastAPI):
@@ -128,5 +164,55 @@ def create_app(
                 raise
             span.set_attribute("workflow.status", result["status"])
             return result
+
+    @app.post("/tasks", status_code=201)
+    def submit_task(
+        envelope: TaskEnvelope,
+        principal: str = Depends(authenticated_principal),
+    ) -> dict[str, object]:
+        try:
+            record = intake_store.submit(
+                envelope, principal, settings.task_intake_origin,
+            )
+        except TaskConflictError as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+        except Exception as exc:
+            raise HTTPException(status_code=503, detail="task intake unavailable") from exc
+        response = asdict(record)
+        response["created_at"] = record.created_at.isoformat()
+        response["updated_at"] = record.updated_at.isoformat()
+        return response
+
+    def transition_task(
+        request_id: str,
+        event: str,
+        principal: str,
+    ) -> dict[str, object]:
+        try:
+            record = intake_store.transition(request_id, principal, event)  # type: ignore[arg-type]
+        except TaskNotFoundError as exc:
+            raise HTTPException(status_code=404, detail="task not found") from exc
+        except InvalidTaskTransitionError as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+        except Exception as exc:
+            raise HTTPException(status_code=503, detail="task intake unavailable") from exc
+        response = asdict(record)
+        response["created_at"] = record.created_at.isoformat()
+        response["updated_at"] = record.updated_at.isoformat()
+        return response
+
+    @app.post("/tasks/{request_id}/cancel")
+    def cancel_task(
+        request_id: str,
+        principal: str = Depends(authenticated_principal),
+    ) -> dict[str, object]:
+        return transition_task(request_id, "cancelled", principal)
+
+    @app.post("/tasks/{request_id}/resume")
+    def resume_task(
+        request_id: str,
+        principal: str = Depends(authenticated_principal),
+    ) -> dict[str, object]:
+        return transition_task(request_id, "resumed", principal)
 
     return app

@@ -29,3 +29,7 @@ versionada e não autorizada no homelab.
 efetivamente cobrado. O campo legado `cost_usd` permanece como alias do custo
 cobrado. A migration foi aplicada no homelab em 2026-08-12 após dump e
 restauração validados; a evidência está em `docs/database-operations.md`.
+
+`0007_task_intake.sql` cria as tabelas persistentes de tarefas e eventos para
+O4. Sua presença no repositório não autoriza aplicação; aplicar exige owner do
+banco, backup e janela conforme `docs/autonomy-matrix.md`.

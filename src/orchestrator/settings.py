@@ -16,6 +16,9 @@ class Settings:
     deepseek_daily_budget_usd: float
     deepseek_pilot_budget_usd: float
     deepseek_pilot_started_at: datetime
+    task_intake_bearer_token: str = ""
+    task_intake_principal: str = ""
+    task_intake_origin: str = ""
     technical_reserve: TechnicalReserveConfig = field(
         default_factory=TechnicalReserveConfig
     )
@@ -55,5 +58,8 @@ class Settings:
             deepseek_daily_budget_usd=daily_budget,
             deepseek_pilot_budget_usd=pilot_budget,
             deepseek_pilot_started_at=pilot_started_at,
+            task_intake_bearer_token=os.environ.get("TASK_INTAKE_BEARER_TOKEN", ""),
+            task_intake_principal=os.environ.get("TASK_INTAKE_PRINCIPAL", ""),
+            task_intake_origin=os.environ.get("TASK_INTAKE_ORIGIN", ""),
             technical_reserve=TechnicalReserveConfig.from_env(),
         )
