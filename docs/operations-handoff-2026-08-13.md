@@ -1,22 +1,24 @@
 # Handoff local — entrada em operação do time de agentes
 
-Atualizado em 2026-08-13 12:00 (America/Sao_Paulo).
+Atualizado em 2026-08-14 18:40 (America/Sao_Paulo).
 
 ## Ponto de retomada
 
-O Agent Orchestrator está apto para **operação assistida**. A Fase 9 foi
-encerrada, API e Phoenix estão saudáveis, o piloto de 20 tarefas foi concluído,
-o ledger distingue custo simulado de custo cobrado e o fluxo GitHub possui CI,
-PR obrigatório e monitor persistente do Spock.
+O Agent Orchestrator está apto para **autonomia supervisionada**. O1–O5 estão
+aprovados com evidências reconciliadas: NVD automático, recuperação controlada
+de CI, alerta e recuperação do Phoenix, entrada canônica e matriz de autonomia.
+API, Phoenix e PostgreSQL estão saudáveis; `main` continua protegida pelos
+quatro checks obrigatórios e sem bypass administrativo.
 
-Para operação autônoma contínua, retomar pela etapa **O1 — corrigir o job NVD
-do Tuvok**. Não declarar autonomia completa até O1–O3 passarem. O1–O3 são gates
-bloqueantes; O4–O6 concluem a homologação do processo operacional.
+Para operação autônoma contínua, retomar pela etapa **O6 — executar o piloto
+operacional completo**. Não declarar homologação final até o piloto correlacionar
+request ID, sessões, PR, SHA, CI, observabilidade, ledger, custo e rollback.
 
 ## Baseline comprovado
 
 - repositório privado: `jeffersonarpasserini/agent-orchestrator`;
-- `main`: commit `44e1b47`, protegida inclusive contra bypass administrativo;
+- `main`: commit `52a9804` auditado antes da abertura do PR #10, protegida
+  inclusive contra bypass administrativo;
 - PR #1: mesclado após quatro checks aprovados;
 - CI obrigatório: `Change hygiene`, `Python 3.12 tests`, `Python security` e
   `Validate Docker Compose`;
@@ -70,6 +72,22 @@ Rollback: pausar somente o job NVD e restaurar a última cópia conhecida; não
 desabilitar os demais jobs do Spock.
 
 ### O2 — Comprovar falha e correção automática de CI pelo Spock
+
+**Estado:** aprovado em 2026-08-13 pelo PR #2. O SHA controlado
+`44e6a4c3379b009c14176ed2f62ed145d8687857` executou os quatro checks e falhou
+somente em `Python 3.12 tests`, no sentinela explícito
+`tests/test_ci_failure_drill.py:6`. O run autoritativo foi `31721934237`, job
+`94520779496`; os outros três checks passaram.
+
+O monitor persistente acionou o Spock, que registrou a causa e obteve revisão
+independente de Data e Tuvok. A correção limitada removeu somente o sentinela.
+No SHA `69b8226bc844cc9a10bb2f9ab008e86835208084`, os quatro checks passaram. O
+estado durável do monitor foi persistido no commit
+`96656dbd98dad36fcdcbffd0fb3b617dd2c47b45`, também verde, e o PR #2 foi
+integrado como `26082ecc60d487808f25420b3da32294aad19309`.
+
+O monitor `27ed14ebd83f` permanece ativo a cada dois minutos e registrou
+execuções `completed` em 2026-08-14. Resultado O2: `GO`.
 
 Abrir um PR controlado em branch `agent/ci-failure-drill`. A falha deve ser
 inofensiva, reversível e isolada, por exemplo um teste sentinela temporário.
