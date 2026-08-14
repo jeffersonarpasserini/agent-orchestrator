@@ -18,8 +18,8 @@
   aprovação, critérios de aceite e rollback de uma mudança real sem migration
 - [x] 2.2 Submeter a tarefa pela entrada canônica e comprovar identidade,
   idempotência e trilha persistente
-- [ ] 2.3 Registrar planejamento, delegação, implementação e sessões por agente
-- [ ] 2.4 Obter revisão independente de Tuvok sobre diff, segurança e evidências
+- [x] 2.3 Registrar planejamento, delegação, implementação e sessões por agente
+- [x] 2.4 Obter revisão independente de Tuvok sobre diff, segurança e evidências
 - [ ] 2.5 Abrir PR, observar o monitor Spock e obter os quatro checks no mesmo SHA
 - [ ] 2.6 Obter aprovação de merge, integrar pela proteção de branch e verificar o
   SHA efetivamente presente em `main`

@@ -17,7 +17,8 @@ request ID, sessões, PR, SHA, CI, observabilidade, ledger, custo e rollback.
 ## Baseline comprovado
 
 - repositório privado: `jeffersonarpasserini/agent-orchestrator`;
-- `main`: commit `44e1b47`, protegida inclusive contra bypass administrativo;
+- `main`: commit `52a9804` auditado antes da abertura do PR #10, protegida
+  inclusive contra bypass administrativo;
 - PR #1: mesclado após quatro checks aprovados;
 - CI obrigatório: `Change hygiene`, `Python 3.12 tests`, `Python security` e
   `Validate Docker Compose`;

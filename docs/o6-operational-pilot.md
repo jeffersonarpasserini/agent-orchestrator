@@ -39,6 +39,22 @@ em `2026-08-14T21:43:30.343110+00:00`, com principal
 submissão do mesmo envelope retornou o mesmo timestamp e
 `idempotent_replay=true`, sem criar nova tarefa.
 
+Essa é evidência operacional coletada pelo operador no host, por resposta da
+API interna, sem imprimir a credencial. Ela não é reproduzível somente pelo
+checkout e permanece sujeita à reconciliação final com a linha e os eventos no
+PostgreSQL antes da decisão de homologação.
+
 A revisão independente preliminar do PR #9 recebeu `GO` do Tuvok na sessão
 `20260814_183736_1e7799`. O PR, merge, observabilidade, ledger e decisão final
 do O6 serão preenchidos somente após cada evidência existir.
+
+## Sessões e handoffs
+
+- planejamento e implementação: Codex no workspace compartilhado; o produto
+  não expõe session ID local para este turno;
+- revisão preliminar do PR #9: Tuvok, sessão `20260814_183736_1e7799`, `GO`;
+- revisão do PR #10: Tuvok, sessão `20260814_185825_8c55b6`, `GO condicional`;
+- condição apontada: atualizar o baseline de `main` e declarar a proveniência
+  externa da evidência de runtime; ambas corrigidas após a revisão;
+- monitor: job Spock `27ed14ebd83f`, execução manual concluída após publicação
+  do SHA `fb9a6483a0e678549dfb379b04226e18ad3cebe8`.
