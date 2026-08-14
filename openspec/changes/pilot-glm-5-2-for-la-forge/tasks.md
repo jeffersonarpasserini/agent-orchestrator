@@ -1,13 +1,13 @@
 # 1. Preparação
 
-- [ ] 1.1 Registrar baseline efetivo de `la-forge`, sem copiar credenciais
+- [x] 1.1 Registrar baseline efetivo de `la-forge`, sem copiar credenciais
 - [ ] 1.2 Confirmar saldo, cota e janela do Token Plan Individual Lite
-- [ ] 1.3 Criar backup restrito da configuração e procedimento de rollback
+- [x] 1.3 Criar backup restrito da configuração e procedimento de rollback
 - [ ] 1.4 Definir tarefa full stack, critérios e limites idênticos para os dois modelos
 
 # 2. Compatibilidade do Hermes
 
-- [ ] 2.1 Criar candidato isolado com `glm-5.2`, endpoint Token Plan e sem fallback
+- [x] 2.1 Criar candidato isolado com `glm-5.2`, endpoint Token Plan e sem fallback
 - [ ] 2.2 Validar chamada simples, streaming, session ID e métricas
 - [ ] 2.3 Validar saída estruturada sem contaminação por `reasoning_content`
 - [ ] 2.4 Validar function calling com `tool_stream: true`

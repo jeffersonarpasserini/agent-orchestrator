@@ -5,6 +5,17 @@
 Plan Individual. O plano inclui exatamente o modelo `glm-5.2` e contabiliza seu
 uso em Credits.
 
+Baseline confirmado em 2026-08-13: o perfil efetivo permanece em
+`qwen3.8-max`; o candidato isolado `la-forge-glm` usa `glm-5.2`, o mesmo
+provedor interno e o endpoint do Token Plan, sem fallback. O nome interno do
+provedor é legado e não implica uso do endpoint antigo do Coding Plan.
+
+A allowlist do Token Plan fornecida pelo owner inclui `qwen3.8-max`,
+`qwen3.7-max`, `qwen3.7-plus`, `qwen3.6-flash`, `deepseek-v4-flash-0731`,
+`deepseek-v4-pro` e `glm-5.2`, além dos modelos multimodais relacionados. O ID
+exato `deepseek-v4-flash-0731` foi confirmado pelo catálogo efetivo da
+assinatura e por uma chamada real isolada antes de qualquer migração de perfil.
+
 O GLM-5.2 suporta contexto longo, raciocínio, saída estruturada e function
 calling. Na integração OpenAI-compatible, tool calling requer
 `tool_stream: true`; thinking pode produzir `reasoning_content`, que precisa ser
@@ -115,3 +126,8 @@ capacidade necessária às tarefas já aprovadas da Fase 8.
 Restaurar o backup da configuração de `la-forge` com `qwen3.8-max`, reiniciar
 somente o gateway do perfil e repetir o smoke test previamente aprovado. O
 rollback não pode selecionar uma chave pay-as-you-go nem habilitar fallback.
+
+O backup pré-piloto foi armazenado em
+`~/.hermes/backups/la-forge-before-glm-20260813.tar.gz`, modo `0600`, SHA-256
+`7e01432ccca68d71870d828377de7f47dc2e9221c2cf096222ee671742c2f336`. O
+arquivo contém configuração potencialmente sensível e não deve ser versionado.
