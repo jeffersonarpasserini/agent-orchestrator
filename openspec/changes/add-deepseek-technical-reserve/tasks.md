@@ -43,10 +43,10 @@
 
 # 6. Compatibilidade de modelos
 
-- [ ] 6.1 Validar `deepseek-v4-flash-0731` no QwenCloud contra `deepseek-v4-flash` direto
-- [ ] 6.2 Validar `deepseek-v4-pro` em cada endpoint sem presumir snapshot idêntico
-- [ ] 6.3 Cobrir thinking, ferramentas, JSON, streaming, contexto e limites de output
-- [ ] 6.4 Registrar diferenças funcionais e bloquear perfis incompatíveis
+- [x] 6.1 Validar `deepseek-v4-flash-0731` no QwenCloud contra `deepseek-v4-flash` direto
+- [x] 6.2 Validar `deepseek-v4-pro` em cada endpoint sem presumir snapshot idêntico
+- [x] 6.3 Cobrir thinking, ferramentas, JSON, streaming, contexto e limites de output
+- [x] 6.4 Registrar diferenças funcionais e bloquear perfis incompatíveis
 
 # 7. Ledger e observabilidade
 
@@ -69,6 +69,6 @@
 
 - [ ] 9.1 Executar modo shadow e revisar falsos positivos de elegibilidade
 - [ ] 9.2 Habilitar um perfil Flash com teto mínimo e aprovação por chamada
-- [ ] 9.3 Comparar custo, qualidade e comportamento das duas rotas
-- [ ] 9.4 Obter decisão final de Spock antes de expandir
-- [ ] 9.5 Documentar rollback e realizar go/no-go por perfil
+- [x] 9.3 Comparar custo, qualidade e comportamento das duas rotas
+- [x] 9.4 Obter decisão final de Spock antes de expandir
+- [x] 9.5 Documentar rollback e realizar go/no-go por perfil
