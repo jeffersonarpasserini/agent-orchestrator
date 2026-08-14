@@ -109,11 +109,11 @@
 
 ## 7. Higiene, arquivamento e decisão final
 
-- [ ] 7.1 Arquivar `add-canonical-task-intake` após confirmar que specs canônicas
+- [x] 7.1 Arquivar `add-canonical-task-intake` após confirmar que specs canônicas
   refletem o runtime
-- [ ] 7.2 Arquivar `record-pilot-task-metrics`
-- [ ] 7.3 Arquivar `enforce-deepseek-pilot-budget`
-- [ ] 7.4 Arquivar `normalize-tirith-warning`
+- [x] 7.2 Arquivar `record-pilot-task-metrics`
+- [x] 7.3 Arquivar `enforce-deepseek-pilot-budget`
+- [x] 7.4 Arquivar `normalize-tirith-warning`
 - [ ] 7.5 Instalar/habilitar parser SQL do Graphify e reprocessar os sete arquivos
   SQL atualmente sem AST
 - [ ] 7.6 Revisar os nós isolados do Graphify e classificar falso positivo versus
