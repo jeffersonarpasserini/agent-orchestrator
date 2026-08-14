@@ -95,8 +95,18 @@ falha deliberada em `main` nem interromper serviços do homelab.
 
 ### O3 — Testar alerta e recuperação no Uptime Kuma
 
-Executar na janela padrão de terça-feira, 20:00–22:00 America/Sao_Paulo, com
-owner e rollback anunciados. Testar um serviço por vez, começando pelo Phoenix.
+**Estado:** aprovado operacionalmente e por Tuvok em 2026-08-13. O Phoenix foi
+interrompido isoladamente às 21:10:05 BRT; o monitor 10 registrou `DOWN` às
+21:12:27 e `UP` às 21:16:27. O owner confirmou as duas notificações, a API e o
+PostgreSQL permaneceram saudáveis e o smoke sem modelo retornou `200` após a
+recuperação. A detecção definitiva levou aproximadamente 142 segundos após dois
+estados `pending`, risco residual baixo aceito pelo revisor. Evidências
+detalhadas estão em `docs/o3-phoenix-recovery-drill.md`.
+
+A janela padrão é terça-feira, 20:00–22:00 America/Sao_Paulo, salvo
+reagendamento explícito pelo owner e ratificação de Spock. Nesta execução, o
+owner antecipou a janela para 2026-08-13 às 21:10 BRT. Manter owner e rollback
+anunciados e testar um serviço por vez, começando pelo Phoenix.
 
 Aceite:
 
