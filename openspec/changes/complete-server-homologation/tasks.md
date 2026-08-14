@@ -114,9 +114,9 @@
 - [x] 7.2 Arquivar `record-pilot-task-metrics`
 - [x] 7.3 Arquivar `enforce-deepseek-pilot-budget`
 - [x] 7.4 Arquivar `normalize-tirith-warning`
-- [ ] 7.5 Instalar/habilitar parser SQL do Graphify e reprocessar os sete arquivos
+- [x] 7.5 Instalar/habilitar parser SQL do Graphify e reprocessar os sete arquivos
   SQL atualmente sem AST
-- [ ] 7.6 Revisar os nós isolados do Graphify e classificar falso positivo versus
+- [x] 7.6 Revisar os nós isolados do Graphify e classificar falso positivo versus
   relacionamento ausente
 - [x] 7.7 Executar suíte completa, `git diff --check`, validação estrita de todas
   as mudanças ativas e `graphify update .`
