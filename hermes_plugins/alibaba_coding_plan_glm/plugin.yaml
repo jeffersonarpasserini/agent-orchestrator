@@ -1,0 +1,5 @@
+name: alibaba-coding-plan-glm-pilot
+kind: model-provider
+version: 1.0.0
+description: Candidate-only GLM-5.2 protocol overrides for Alibaba Token Plan
+author: Agent Orchestrator
