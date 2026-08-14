@@ -23,3 +23,7 @@ credenciais, tokens, endpoints privados, sessões ou prompts.
 O baseline esperado contém 12 perfis. Modelo e alias devem ser comparados antes
 e depois da Fase 5. O estado dos gateways é transitório. O backup completo
 permanece criptografado no Kopia e separado deste inventário.
+
+> Atualização: este inventário é histórico. Em 2026-08-14, `la-forge` foi
+> promovido de `qwen3.8-max` para `glm-5.2` após piloto OpenSpec e GO pleno de
+> Spock. Consulte `docs/glm-5-2-pilot.md` para o estado efetivo e o rollback.

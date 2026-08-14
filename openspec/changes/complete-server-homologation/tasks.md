@@ -45,24 +45,25 @@
 
 ## 4. Pendências do piloto GLM-5.2
 
-- [ ] 4.1 Confirmar saldo, cota e janela do Token Plan Individual Lite
-- [ ] 4.2 Definir tarefa full stack, critérios e limites idênticos para os modelos
-- [ ] 4.3 Validar chamada simples, streaming, session ID e métricas
-- [ ] 4.4 Validar saída estruturada sem contaminação por `reasoning_content`
-- [ ] 4.5 Validar function calling com `tool_stream: true`
-- [ ] 4.6 Validar segundo turno com thinking preservado ou limpo explicitamente
-- [ ] 4.7 Cobrir parâmetros GLM com testes sem alterar outros provedores
-- [ ] 4.8 Executar o cenário aprovado com `qwen3.8-max`
-- [ ] 4.9 Verificar saldo e executar o mesmo cenário com `glm-5.2`
-- [ ] 4.10 Registrar sessões, chamadas, tokens, thinking, latência e Credits
-- [ ] 4.11 Solicitar revisão independente de Tuvok
-- [ ] 4.12 Solicitar decisão final de Spock
-- [ ] 4.13 Promover `glm-5.2` somente se todos os gates forem aprovados
-- [ ] 4.14 Atualizar descrição, inventário e avaliação sem alegações obsoletas
-- [ ] 4.15 Executar suíte completa, smoke real e validação estrita de fallback
-- [ ] 4.16 Comprovar consumo em Credits e ausência de pay-as-you-go
-- [ ] 4.17 Validar rollback para `qwen3.8-max`
-- [ ] 4.18 Registrar conclusão ou remover o candidato e manter o baseline
+- [x] 4.1 Confirmar saldo, cota e janela do Token Plan Individual Lite
+- [x] 4.2 Definir tarefa full stack, critérios e limites idênticos para os modelos
+- [x] 4.3 Validar chamada simples, streaming, session ID e métricas
+- [x] 4.4 Validar saída estruturada sem contaminação por `reasoning_content`
+- [x] 4.5 Validar function calling com `tool_stream: true`
+- [x] 4.6 Validar segundo turno com thinking preservado ou limpo explicitamente
+- [x] 4.7 Cobrir parâmetros GLM com testes sem alterar outros provedores
+- [x] 4.8 Executar o cenário aprovado com `qwen3.8-max` (reprovado por timeout,
+  ausência de resposta final e tentativa de escrita)
+- [x] 4.9 Verificar saldo e executar o mesmo cenário com `glm-5.2`
+- [x] 4.10 Registrar sessões, chamadas, tokens, thinking, latência e Credits
+- [x] 4.11 Solicitar revisão independente de Tuvok
+- [x] 4.12 Solicitar decisão final de Spock
+- [x] 4.13 Promover `glm-5.2` somente se todos os gates forem aprovados
+- [x] 4.14 Atualizar descrição, inventário e avaliação sem alegações obsoletas
+- [x] 4.15 Executar suíte completa, smoke real e validação estrita de fallback
+- [x] 4.16 Comprovar consumo em Credits e ausência de pay-as-you-go
+- [x] 4.17 Validar rollback para `qwen3.8-max`
+- [x] 4.18 Registrar conclusão; promoção aprovada e rollback Qwen preservado
 
 ## 5. Pendências da reserva técnica DeepSeek
 
@@ -114,9 +115,9 @@
 - [x] 7.2 Arquivar `record-pilot-task-metrics`
 - [x] 7.3 Arquivar `enforce-deepseek-pilot-budget`
 - [x] 7.4 Arquivar `normalize-tirith-warning`
-- [ ] 7.5 Instalar/habilitar parser SQL do Graphify e reprocessar os sete arquivos
+- [x] 7.5 Instalar/habilitar parser SQL do Graphify e reprocessar os sete arquivos
   SQL atualmente sem AST
-- [ ] 7.6 Revisar os nós isolados do Graphify e classificar falso positivo versus
+- [x] 7.6 Revisar os nós isolados do Graphify e classificar falso positivo versus
   relacionamento ausente
 - [x] 7.7 Executar suíte completa, `git diff --check`, validação estrita de todas
   as mudanças ativas e `graphify update .`
