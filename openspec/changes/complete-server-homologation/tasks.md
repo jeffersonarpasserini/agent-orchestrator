@@ -20,15 +20,15 @@
   idempotência e trilha persistente
 - [x] 2.3 Registrar planejamento, delegação, implementação e sessões por agente
 - [x] 2.4 Obter revisão independente de Tuvok sobre diff, segurança e evidências
-- [ ] 2.5 Abrir PR, observar o monitor Spock e obter os quatro checks no mesmo SHA
-- [ ] 2.6 Obter aprovação de merge, integrar pela proteção de branch e verificar o
+- [x] 2.5 Abrir PR, observar o monitor Spock e obter os quatro checks no mesmo SHA
+- [x] 2.6 Obter aprovação de merge, integrar pela proteção de branch e verificar o
   SHA efetivamente presente em `main`
-- [ ] 2.7 Confirmar readiness, Phoenix, Kuma, PostgreSQL e ausência de segredo em
+- [x] 2.7 Confirmar readiness, Phoenix, Kuma, PostgreSQL e ausência de segredo em
   logs/traces após o merge
-- [ ] 2.8 Reconciliar chamadas, tokens, custo simulado, custo cobrado e rota de
+- [x] 2.8 Reconciliar chamadas, tokens, custo simulado, custo cobrado e rota de
   billing no ledger
-- [ ] 2.9 Exercitar ou comprovar rollback da mudança no menor escopo seguro
-- [ ] 2.10 Publicar relatório O6 com tempo, tentativas, chamadas, custos, riscos,
+- [x] 2.9 Exercitar ou comprovar rollback da mudança no menor escopo seguro
+- [x] 2.10 Publicar relatório O6 com tempo, tentativas, chamadas, custos, riscos,
   sessões, PR, SHA e decisão final de Spock
 
 ## 3. Fechar a atualização documental GLM em curso
@@ -118,10 +118,10 @@
   SQL atualmente sem AST
 - [ ] 7.6 Revisar os nós isolados do Graphify e classificar falso positivo versus
   relacionamento ausente
-- [ ] 7.7 Executar suíte completa, `git diff --check`, validação estrita de todas
+- [x] 7.7 Executar suíte completa, `git diff --check`, validação estrita de todas
   as mudanças ativas e `graphify update .`
-- [ ] 7.8 Publicar relatório de homologação com blockers, pendências não
+- [x] 7.8 Publicar relatório de homologação com blockers, pendências não
   bloqueantes, owners, riscos aceitos e rollback
-- [ ] 7.9 Obter revisão final de Tuvok e decisão final de Spock
-- [ ] 7.10 Obter autorização do owner para declarar o servidor homologado e
+- [x] 7.9 Obter revisão final de Tuvok e decisão final de Spock
+- [x] 7.10 Obter autorização do owner para declarar o servidor homologado e
   registrar `GO`, `GO condicional` ou `NO-GO`

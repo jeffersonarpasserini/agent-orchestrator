@@ -1,24 +1,25 @@
 # Handoff local — entrada em operação do time de agentes
 
-Atualizado em 2026-08-14 18:40 (America/Sao_Paulo).
+Atualizado em 2026-08-14 (America/Sao_Paulo).
 
 ## Ponto de retomada
 
-O Agent Orchestrator está apto para **autonomia supervisionada**. O1–O5 estão
-aprovados com evidências reconciliadas: NVD automático, recuperação controlada
-de CI, alerta e recuperação do Phoenix, entrada canônica e matriz de autonomia.
+O Agent Orchestrator está homologado com **GO para operação autônoma contínua**.
+O1–O6 estão aprovados com evidências reconciliadas: NVD automático, recuperação
+controlada de CI, alerta e recuperação do Phoenix, entrada canônica, matriz de
+autonomia e piloto operacional completo.
 API, Phoenix e PostgreSQL estão saudáveis; `main` continua protegida pelos
 quatro checks obrigatórios e sem bypass administrativo.
 
-Para operação autônoma contínua, retomar pela etapa **O6 — executar o piloto
-operacional completo**. Não declarar homologação final até o piloto correlacionar
-request ID, sessões, PR, SHA, CI, observabilidade, ledger, custo e rollback.
+O proprietário autorizou a homologação em 2026-08-14 após o parecer **GO pleno**
+do Spock, sessão `20260814_191018_2d94ff`. As pendências restantes são evolução
+pós-homologação e não bloqueiam a operação.
 
 ## Baseline comprovado
 
 - repositório privado: `jeffersonarpasserini/agent-orchestrator`;
-- `main`: commit `52a9804` auditado antes da abertura do PR #10, protegida
-  inclusive contra bypass administrativo;
+- `main`: commit `c3be1a6` após o merge autorizado do PR #10, protegida inclusive
+  contra bypass administrativo;
 - PR #1: mesclado após quatro checks aprovados;
 - CI obrigatório: `Change hygiene`, `Python 3.12 tests`, `Python security` e
   `Validate Docker Compose`;
@@ -26,7 +27,8 @@ request ID, sessões, PR, SHA, CI, observabilidade, ledger, custo e rollback.
 - monitor Spock: job `27ed14ebd83f`, a cada dois minutos, com KV durável;
 - API e Phoenix: saudáveis e monitorados pelo Uptime Kuma;
 - canal padrão: `Phoenix Notification`, associado aos dois monitores;
-- custo do piloto: US$ 2,645695612200 simulado e US$ 0,071328612200 cobrado;
+- ledger O6: seis sessões, 45 chamadas, US$ 1,622381649 simulado e US$ 0,00
+  cobrado;
 - backup restaurado: migrations `0001`–`0006` e 20 linhas do ledger.
 
 ## Sequência de execução
@@ -191,7 +193,7 @@ Aceite:
 |---|---|
 | Operação assistida | Já autorizável, mantendo os gates humanos atuais |
 | Autonomia supervisionada | O1–O3 aprovadas e O4–O5 homologadas |
-| Operação autônoma contínua | O1–O6 aprovadas, sem blocker financeiro ou de segurança |
+| Operação autônoma contínua | **GO homologado**: O1–O6 aprovadas, sem blocker financeiro ou de segurança |
 
 Qualquer falha em custo, segredo, integridade do ledger, proteção da `main` ou
 restauração muda a decisão para `NO-GO` até contenção e nova evidência.
