@@ -1,0 +1,99 @@
+extensions:
+  health_check:
+    endpoint: 0.0.0.0:13133
+  basicauth/openobserve:
+    client_auth:
+      username: ${env:OPENOBSERVE_ROOT_EMAIL}
+      password: ${env:OPENOBSERVE_ROOT_PASSWORD}
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 192
+    spike_limit_mib: 48
+  transform/redact:
+    error_mode: propagate
+    trace_statements:
+      - context: resource
+        statements:
+          - keep_keys(attributes, ["service.name", "service.version", "deployment.environment.name", "telemetry.sdk.language", "telemetry.sdk.name", "telemetry.sdk.version"])
+      - context: span
+        statements:
+          - keep_keys(attributes, ["agent.profile", "error.type", "http.request.method", "http.response.status_code", "server.address", "server.port", "url.scheme", "rpc.system", "rpc.service", "rpc.method"])
+      - context: spanevent
+        statements:
+          - keep_keys(attributes, ["exception.type", "exception.escaped"])
+    log_statements:
+      - context: resource
+        statements:
+          - keep_keys(attributes, ["service.name", "service.version", "deployment.environment.name", "telemetry.sdk.language", "telemetry.sdk.name", "telemetry.sdk.version"])
+      - context: log
+        statements:
+          - set(body, "[redacted]")
+          - keep_keys(attributes, ["agent.profile", "error.type", "log.severity"])
+    metric_statements:
+      - context: resource
+        statements:
+          - keep_keys(attributes, ["service.name", "service.version", "deployment.environment.name", "telemetry.sdk.language", "telemetry.sdk.name", "telemetry.sdk.version"])
+      - context: datapoint
+        statements:
+          - keep_keys(attributes, ["agent.profile", "http.request.method", "http.response.status_code", "rpc.system", "rpc.service", "rpc.method"])
+  batch:
+    send_batch_size: 256
+    timeout: 2s
+
+exporters:
+  otlp_http/phoenix:
+    endpoint: http://phoenix:6006
+    sending_queue:
+      enabled: true
+      queue_size: 256
+    retry_on_failure:
+      enabled: true
+      max_elapsed_time: 30s
+  otlp_http/openobserve:
+    endpoint: http://openobserve:5080/api/default
+    auth:
+      authenticator: basicauth/openobserve
+    headers:
+      stream-name: agent-orchestrator-pilot
+    sending_queue:
+      enabled: true
+      queue_size: 256
+    retry_on_failure:
+      enabled: true
+      max_elapsed_time: 30s
+
+service:
+  extensions: [health_check, basicauth/openobserve]
+  telemetry:
+    logs:
+      level: warn
+    metrics:
+      readers:
+        - pull:
+            exporter:
+              prometheus:
+                host: 0.0.0.0
+                port: 8888
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, transform/redact, batch]
+      exporters: [otlp_http/phoenix, otlp_http/openobserve]
+    logs:
+      receivers: [otlp]
+      processors: [memory_limiter, transform/redact, batch]
+      exporters: [otlp_http/openobserve]
+    metrics:
+      receivers: [otlp]
+      processors: [memory_limiter, transform/redact, batch]
+      exporters: [otlp_http/openobserve]

@@ -1,7 +1,8 @@
 # hermes-output-normalization Specification
 
 ## Purpose
-TBD - created by archiving change normalize-tirith-warning. Update Purpose after archive.
+Preservar payloads estruturados e IDs de sessão ao remover exclusivamente os
+avisos operacionais iniciais conhecidos emitidos pelo Tirith.
 ## Requirements
 ### Requirement: Avisos operacionais iniciais do Tirith não contaminam o payload
 

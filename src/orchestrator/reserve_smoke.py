@@ -58,6 +58,7 @@ async def execute_smoke(database_url: str, api_key: str) -> dict[str, object]:
     task_id = f"RESERVE-SMOKE-{datetime.now(timezone.utc):%Y%m%dT%H%M%SZ}"
     grant_id = f"reserve-smoke-{uuid4()}"
     reason = PrimaryFailureReason.SUBSCRIPTION_CREDITS_EXHAUSTED
+    expires_at = datetime.now(timezone.utc) + timedelta(minutes=15)
     scope = ReserveGrantScope(
         grant_id=grant_id,
         task_id=task_id,
@@ -67,6 +68,7 @@ async def execute_smoke(database_url: str, api_key: str) -> dict[str, object]:
         reserve_model="deepseek-v4-flash",
         max_cost_usd=0.01,
         primary_failure_reason=reason,
+        expires_at=expires_at,
     )
     grant_store = PostgresReserveGrantStore(database_url)
     grant_store.create_approved(ReserveGrant(
@@ -80,7 +82,7 @@ async def execute_smoke(database_url: str, api_key: str) -> dict[str, object]:
         approved_by="spock",
         max_cost_usd=0.01,
         max_calls=1,
-        expires_at=datetime.now(timezone.utc) + timedelta(minutes=15),
+        expires_at=expires_at,
     ))
     cost_store = PostgresReserveCostStore(database_url)
     executor = DeepSeekReserveExecutor(
@@ -99,8 +101,8 @@ async def execute_smoke(database_url: str, api_key: str) -> dict[str, object]:
     guard = DirectReserveBudgetGuard(
         DeepSeekDirectBalanceReader(api_key),
         PostgresReserveSpendEvidence(database_url),
-        daily_limit_usd=0.25,
-        monthly_limit_usd=2.0,
+        daily_limit_usd=1.0,
+        monthly_limit_usd=10.0,
         operational_timezone=timezone(timedelta(hours=-3)),
     )
     result = await run_hermes_workflow(
@@ -113,8 +115,8 @@ async def execute_smoke(database_url: str, api_key: str) -> dict[str, object]:
             mode=ReserveMode.ENFORCED,
             kill_switch_active=False,
             enabled_profiles=frozenset({"barclay"}),
-            daily_budget_usd=0.25,
-            monthly_budget_usd=2.0,
+            daily_budget_usd=1.0,
+            monthly_budget_usd=10.0,
         ),
         reserve_grant_store=grant_store,
         reserve_grant_scope=scope,

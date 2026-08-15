@@ -16,6 +16,7 @@ from orchestrator.reserve_budget import (
     ReserveBudgetEvidenceError,
     ReserveBudgetExceededError,
 )
+from orchestrator.technical_reserve import BillingRoute
 
 
 MILLION = Decimal("1000000")
@@ -411,6 +412,8 @@ class ReserveProviderResult:
     model: str
     usage: DeepSeekUsage
     output: object
+    provider_request_id: str | None = None
+    billing_route: BillingRoute = BillingRoute.DEEPSEEK_RESERVE
 
 
 class ReserveProvider(Protocol):
@@ -483,6 +486,7 @@ class DeepSeekDirectChatProvider:
             if not isinstance(payload, dict):
                 raise TypeError
             model = payload["model"]
+            provider_request_id = payload.get("id")
             usage = payload["usage"]
             choices = payload["choices"]
             if (
@@ -490,6 +494,10 @@ class DeepSeekDirectChatProvider:
                 or not isinstance(usage, dict)
                 or not isinstance(choices, list)
                 or len(choices) != 1
+                or (
+                    provider_request_id is not None
+                    and not isinstance(provider_request_id, str)
+                )
             ):
                 raise TypeError
             output = choices[0]["message"]["content"]
@@ -504,7 +512,9 @@ class DeepSeekDirectChatProvider:
             raise ReserveOutcomeUnknownError(
                 "DeepSeek reserve response requires reconciliation"
             ) from exc
-        return ReserveProviderResult(model, parsed_usage, output)
+        return ReserveProviderResult(
+            model, parsed_usage, output, provider_request_id=provider_request_id
+        )
 
 
 class DeepSeekReserveExecutor:

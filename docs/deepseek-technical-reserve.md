@@ -440,6 +440,103 @@ piloto GLM-5.2.
 
 Os valores são sugestão e exigem aprovação antes da implementação.
 
+## Baseline vigente — 2026-08-15
+
+Uma inspeção somente leitura dos `config.yaml` efetivos, sem abrir credenciais,
+registrou o seguinte baseline:
+
+| Perfis | Modelo | Provider | Endpoint | Billing |
+|---|---|---|---|---|
+| `barclay`, `rutherford`, `obrien` | `deepseek-v4-flash-0731` | `alibaba-coding-plan` | `https://token-plan.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1` | Token Plan Individual, Credits |
+| `tuvok` | `deepseek-v4-pro` | `alibaba-coding-plan` | `https://token-plan.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1` | Token Plan Individual, Credits |
+
+Todos esses perfis têm `proxy.enabled=false`. Os candidatos isolados com sufixo
+`-token-plan` preservam os mesmos pares modelo/provider. A reserva direta é uma
+rota separada, usa `https://api.deepseek.com`, billing por token descontado do
+saldo DeepSeek e admite somente `deepseek-v4-flash` e `deepseek-v4-pro`.
+
+A documentação oficial do Token Plan Personal Edition, atualizada em
+2026-07-19 e consultada em 2026-08-15, define uma allowlist por ID exato. Entre
+os modelos DeepSeek, ela lista somente `deepseek-v4-pro`; não lista
+`deepseek-v4-flash-0731`. O plano Lite vigente oferece 700 Credits na janela
+móvel de 5 horas e 2.500 Credits na janela móvel de 7 dias. Quando qualquer
+janela atinge o limite, o serviço pausa até haver liberação. O uso é restrito a
+ferramentas interativas de coding/agents; scripts de automação, backends e batch
+são proibidos. A chave do plano também é própria (`sk-sp-`) e não é
+intercambiável com chave padrão do Model Studio.
+
+Consequência fail-closed: Barclay, Rutherford e O'Brien não podem participar de
+shadow ou promoção com seu modelo atual até uma allowlist oficial voltar a
+incluir o ID exato ou uma mudança de perfil ser aprovada e revalidada. Tuvok é
+o único perfil atual compatível com a allowlist, mas é Pro e portanto não
+satisfaz o item de piloto Flash. Nenhum perfil foi alterado por esta constatação.
+
+Na API DeepSeek direta, a documentação vigente confirma os modelos
+`deepseek-v4-flash` e `deepseek-v4-pro`, Chat Completions em
+`https://api.deepseek.com/chat/completions`, listagem em `/models` e consulta de
+saldo em `GET https://api.deepseek.com/user/balance`. Em 2026-08-15, o owner
+forneceu nova evidência do painel da conta direta, em GMT-3 e sujeita a atraso de
+até cinco minutos:
+
+| Métrica | Valor |
+|---|---:|
+| Saldo carregado disponível | US$ 9,62 |
+| Custo total | US$ 0,37 |
+| Custo exibido no período | US$ 0,37 |
+| Requisições de API | 103 |
+| Tokens | 2.956.945 |
+| Alerta de saldo | desabilitado |
+
+O owner confirmou que a conta direta disponibiliza `deepseek-v4-pro` e
+`deepseek-v4-flash`, mas não `deepseek-v4-flash-0731`. O último permanece um ID
+da rota Token Plan e nunca deve ser enviado à API direta. Com essa evidência,
+modelos, saldo e endpoint da conta direta estão confirmados.
+
+O painel também anunciou alteração de preços do `DeepSeek-V4-Pro` a partir de
+00:00 de 2026-08-17 no horário de Pequim, com faixas de pico e fora de pico e
+preço fora de pico equivalente à metade do preço de pico. Qualquer estimativa ou
+grant emitido a partir dessa vigência deve usar uma tabela de preços revisada;
+até essa revisão, uma tentativa Pro deve falhar fechada. O anúncio não altera a
+autorização do piloto Flash.
+
+Em 2026-08-15, o owner aprovou os tetos de **US$ 1,00/dia**,
+**US$ 10,00/mês**, **US$ 0,10 por grant** e **US$ 0,25 por tarefa**. Permanece
+uma chamada por grant e uma tentativa por tarefa. Os limites diário e mensal
+continuam fail-closed e o teto do grant limita cada compromisso individual.
+
+Os owners também foram definidos e formalizados pela mudança
+`formalize-agent-team-governance`: Spock responde por grants e decisão final;
+O'Brien por operação, incidentes e kill switch; Tuvok por segurança e revisão
+independente; Data por finanças, ledger e reconciliação; Bashir por migration,
+backup e restauração; Rutherford por testes e evidências; Uhura por
+documentação; e Spock, Tuvok ou O'Brien podem realizar revogação emergencial.
+O painel de specs reúne Spock, B'Elanna, Seven e Troi.
+
+## Shadow operacional e piloto Flash — 2026-08-15
+
+A revisão independente do Tuvok aceitou o delta de segurança, autorizou o
+shadow com `tuvok`/`deepseek-v4-pro` e, após corrigir explicitamente que o smoke
+faz uma chamada real potencialmente paga, autorizou uma única chamada direta
+Flash. O shadow terminou `completed` na sessão `20260815_130622_636364`, com
+`SHADOW_OK`, sem `reserve_request`, grant ou chamada à API DeepSeek direta.
+
+O piloto criou a tarefa `RESERVE-SMOKE-20260815T160829Z` e o grant
+`reserve-smoke-7fed1be9-bccc-46b2-ba5a-53024efb6e20`, limitado a US$ 0,01. A
+API direta respondeu `RESERVE_SMOKE_OK` usando `deepseek-v4-flash`, com 16
+tokens de entrada sem cache e 8 tokens de saída. O ledger confirmou exatamente
+um grant `consumed`, custo `reconciled` de **US$ 0,00000448** e tentativa
+`completed`. O saldo observado antes da chamada era US$ 9,62.
+
+Spock emitiu **GO final** na sessão `20260815_130921_788124`, mantendo os tetos
+aprovados, grant prévio obrigatório, single-call, ausência de retry/fallback
+pago e reconciliação por grant, tentativa, modelo e custo. Qualquer ampliação
+de escopo, orçamento ou modelo exige nova decisão formal.
+
+A avaliação shadow local e a revisão de falsos positivos estão registradas em
+`docs/deepseek-reserve-shadow-evaluation-2026-08-15.md`. Ela aprovou todos os
+vetores determinísticos sem chamada externa, mas não é apresentada como shadow
+operacional.
+
 ## Situação atual
 
 O adaptador rejeita fallback Hermes configurado. Isso permanece correto até a
@@ -462,6 +559,12 @@ A primeira etapa segura foi implementada:
 Grants persistentes de uso único e a migration `0003` foram implementados em
 código. O consumo exige escopo exato, validade, status aprovado e custo dentro
 do teto. Revogação e aprovador ficam auditáveis.
+
+A migration `0008` complementa esse ledger com uma tentativa idempotente por
+grant. Ela deriva o aprovador do grant na mesma transação, preserva a sessão
+primária fornecida pela falha normalizada e registra ID da resposta direta,
+latência, modelo efetivo, tokens e custo ao finalizar. Esses campos não entram
+nas dimensões agregadas do painel.
 
 O guard financeiro direto também possui uma fundação fail-closed. Ele exige
 snapshot de saldo disponível, soma conservadoramente o teto dos grants já

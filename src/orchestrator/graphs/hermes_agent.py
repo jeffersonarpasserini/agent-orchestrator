@@ -1,5 +1,6 @@
 from __future__ import annotations
 import asyncio
+from time import monotonic
 from typing import Mapping, TypedDict
 from langgraph.graph import END, START, StateGraph
 from orchestrator.adapters.hermes_cli import AgentLimits, HermesCliAdapter
@@ -8,6 +9,7 @@ from orchestrator.reserve_grants import (
     PostgresReserveGrantStore,
     ReserveGrantScope,
 )
+from orchestrator.reserve_ledger import ReserveAttempt, ReserveAttemptStatus
 from orchestrator.reserve_budget import DirectReserveBudgetGuard, ReserveBudgetError
 from orchestrator.deepseek_reserve_finance import (
     DeepSeekReserveExecutor,
@@ -21,6 +23,7 @@ from orchestrator.technical_reserve import (
     ReserveMode,
     build_reserve_request,
 )
+from orchestrator.telemetry import get_tracer
 
 class HermesAgentState(TypedDict):
     profile: str
@@ -41,6 +44,7 @@ class HermesAgentState(TypedDict):
     reserve_grant_id: str
     reserve_grant_scope: ReserveGrantScope | None
     reserve_commitment: ReserveCostCommitment | None
+    reserve_attempt_id: str
     reserve_max_input_tokens: int
     reserve_max_output_tokens: int
 
@@ -94,6 +98,12 @@ def build_hermes_agent_graph(
                         "error": "technical reserve grant is unavailable or out of scope",
                         "reserve_request": request.as_public_dict(),
                     }
+                if scope.is_expired():
+                    return {
+                        "status": "reserve_expired",
+                        "error": "technical reserve grant expired",
+                        "reserve_request": request.as_public_dict(),
+                    }
                 try:
                     commitment = reserve_executor.prepare(
                         grant_id=scope.grant_id,
@@ -113,6 +123,14 @@ def build_hermes_agent_graph(
                         "reserve_request": request.as_public_dict(),
                     }
                 try:
+                    attempt = ReserveAttempt(
+                        attempt_id=f"reserve:{scope.grant_id}",
+                        task_id=scope.task_id,
+                        grant_id=scope.grant_id,
+                        primary_failure_reason=scope.primary_failure_reason,
+                        requested_model=scope.reserve_model,
+                        primary_session_id=exc.session_id,
+                    )
                     consumed = await asyncio.to_thread(
                         reserve_grant_store.consume_with_budget_and_cost,
                         scope,
@@ -120,6 +138,7 @@ def build_hermes_agent_graph(
                         commitment,
                         daily_limit_usd=reserve_budget_guard.daily_limit_usd,
                         monthly_limit_usd=reserve_budget_guard.monthly_limit_usd,
+                        attempt=attempt,
                     )
                 except ReserveBudgetError as budget_error:
                     return {
@@ -133,12 +152,24 @@ def build_hermes_agent_graph(
                         "error": "technical reserve grant is invalid or no longer available",
                         "reserve_request": request.as_public_dict(),
                     }
+                with get_tracer().start_as_current_span(
+                    "technical_reserve.activation"
+                ) as span:
+                    span.set_attribute("billing.route", "deepseek_reserve")
+                    span.set_attribute("reserve.model", scope.reserve_model)
+                    span.set_attribute(
+                        "reserve.primary_failure_reason",
+                        scope.primary_failure_reason.value,
+                    )
+                    span.set_attribute("reserve.status", "reserve_running")
+                    span.add_event("technical_reserve_activated")
                 return {
                     "status": "reserve_approved",
                     "error": "",
                     "reserve_request": request.as_public_dict(),
                     "reserve_grant_id": scope.grant_id,
                     "reserve_commitment": commitment,
+                    "reserve_attempt_id": attempt.attempt_id,
                 }
             return {
                 "status": "reserve_required",
@@ -152,29 +183,69 @@ def build_hermes_agent_graph(
                 "tool_calls": result.tool_calls, "status": result.status,
                 "error": ""}
 
+    async def start_reserve(state: HermesAgentState) -> dict[str, object]:
+        if state["status"] != "reserve_approved":
+            return {
+                "status": "budget_blocked",
+                "error": "technical reserve was not approved",
+            }
+        return {"status": "reserve_running", "error": ""}
+
     async def invoke_reserve(state: HermesAgentState) -> dict[str, object]:
         commitment = state["reserve_commitment"]
+        attempt_id = state["reserve_attempt_id"]
         if reserve_executor is None or commitment is None:
             return {
                 "status": "budget_blocked",
                 "error": "technical reserve executor is unavailable",
             }
+        started_at = monotonic()
         try:
             result = await asyncio.to_thread(
                 reserve_executor.execute_committed, commitment
             )
         except ReserveOutcomeUnknownError:
+            latency_ms = int((monotonic() - started_at) * 1000)
+            await asyncio.to_thread(
+                reserve_grant_store.finish_attempt,
+                attempt_id,
+                ReserveAttemptStatus.OUTCOME_UNKNOWN,
+                latency_ms=latency_ms,
+            )
             return {
                 "status": "reserve_outcome_unknown",
                 "error": "technical reserve outcome requires reconciliation",
             }
         except ReserveBudgetError as exc:
+            latency_ms = int((monotonic() - started_at) * 1000)
+            await asyncio.to_thread(
+                reserve_grant_store.finish_attempt,
+                attempt_id,
+                ReserveAttemptStatus.BUDGET_BLOCKED,
+                latency_ms=latency_ms,
+            )
             return {"status": "budget_blocked", "error": str(exc)}
         except Exception:
+            latency_ms = int((monotonic() - started_at) * 1000)
+            await asyncio.to_thread(
+                reserve_grant_store.finish_attempt,
+                attempt_id,
+                ReserveAttemptStatus.FAILED,
+                latency_ms=latency_ms,
+            )
             return {
                 "status": "reserve_failed",
                 "error": "technical reserve provider failed",
             }
+        latency_ms = int((monotonic() - started_at) * 1000)
+        await asyncio.to_thread(
+            reserve_grant_store.finish_attempt,
+            attempt_id,
+            ReserveAttemptStatus.COMPLETED,
+            effective_model=result.model,
+            reserve_session_id=result.provider_request_id,
+            latency_ms=latency_ms,
+        )
         return {
             "text": result.output if isinstance(result.output, str) else str(result.output),
             "usage": {
@@ -187,15 +258,19 @@ def build_hermes_agent_graph(
         }
 
     def route_after_primary(state: HermesAgentState):
-        return "reserve" if state["status"] == "reserve_approved" else END
+        return "start_reserve" if state["status"] == "reserve_approved" else END
 
     builder = StateGraph(HermesAgentState)
     builder.add_node("hermes_agent", invoke_agent)
+    builder.add_node("start_reserve", start_reserve)
     builder.add_node("deepseek_reserve", invoke_reserve)
     builder.add_edge(START, "hermes_agent")
     builder.add_conditional_edges(
-        "hermes_agent", route_after_primary, {"reserve": "deepseek_reserve", END: END}
+        "hermes_agent",
+        route_after_primary,
+        {"start_reserve": "start_reserve", END: END},
     )
+    builder.add_edge("start_reserve", "deepseek_reserve")
     builder.add_edge("deepseek_reserve", END)
     return builder.compile()
 
@@ -233,6 +308,7 @@ async def run_hermes_workflow(
         "reserve_grant_id": "",
         "reserve_grant_scope": reserve_grant_scope,
         "reserve_commitment": None,
+        "reserve_attempt_id": "",
         "reserve_max_input_tokens": reserve_max_input_tokens,
         "reserve_max_output_tokens": reserve_max_output_tokens,
     })

@@ -20,6 +20,7 @@ from orchestrator.reserve_budget import (
     ReserveBudgetEvidenceError,
     ReserveBudgetExceededError,
 )
+from orchestrator.technical_reserve import BillingRoute
 
 
 class FakeTransport:
@@ -58,6 +59,19 @@ class DeepSeekTransportSafetyTest(unittest.TestCase):
                 UrllibJsonTransport().get_json(url, {}, 1)
             with self.subTest(url=url), self.assertRaisesRegex(ValueError, "not allowed"):
                 UrllibJsonPostTransport().post_json(url, {}, {}, 1)
+
+    def test_transport_failure_does_not_reflect_direct_credential(self):
+        provider = DeepSeekDirectChatProvider(
+            "private-direct-key",
+            ({"role": "user", "content": "hello"},),
+            max_output_tokens=8,
+            transport=FakePostTransport(error=RuntimeError("network failed")),
+        )
+
+        with self.assertRaises(Exception) as raised:
+            provider.invoke_once("deepseek-v4-flash")
+
+        self.assertNotIn("private-direct-key", str(raised.exception))
 
 
 class DeepSeekDirectBalanceReaderTest(unittest.TestCase):
@@ -142,6 +156,7 @@ class DeepSeekCostEstimatorTest(unittest.TestCase):
 class DeepSeekDirectChatProviderTest(unittest.TestCase):
     def response(self):
         return {
+            "id": "chatcmpl-reserve-1",
             "model": "deepseek-v4-flash",
             "choices": [{"message": {"content": "ok"}}],
             "usage": {
@@ -161,7 +176,9 @@ class DeepSeekDirectChatProviderTest(unittest.TestCase):
         result = provider.invoke_once("deepseek-v4-flash")
 
         self.assertEqual(result.output, "ok")
+        self.assertEqual(result.provider_request_id, "chatcmpl-reserve-1")
         self.assertEqual(result.usage.completion_tokens, 30)
+        self.assertEqual(result.billing_route, BillingRoute.DEEPSEEK_RESERVE)
         url, headers, payload, timeout = transport.calls[0]
         self.assertEqual(url, "https://api.deepseek.com/chat/completions")
         self.assertEqual(headers["Authorization"], "Bearer private-key")

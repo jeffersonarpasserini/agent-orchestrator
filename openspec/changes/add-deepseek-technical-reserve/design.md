@@ -127,11 +127,13 @@ termina bloqueada; não degrada silenciosamente ferramentas ou thinking.
 
 ## Orçamento e circuit breakers
 
-Os limites da reserva são independentes do Token Plan. Valores iniciais devem
-ser aprovados antes da implementação; sugestão para o piloto:
+Os limites da reserva são independentes do Token Plan. Em 2026-08-15, o owner
+aprovou para o piloto:
 
-- US$ 0,25 por dia;
-- US$ 2,00 por mês;
+- US$ 1,00 por dia;
+- US$ 10,00 por mês;
+- US$ 0,10 por grant;
+- US$ 0,25 por tarefa;
 - uma chamada direta por grant;
 - uma tentativa de reserva por tarefa;
 - custo máximo estimado por chamada definido no grant.

@@ -34,7 +34,8 @@ Qualquer item ausente resulta em **no-go**.
 - um grant, uma chamada, uma tentativa;
 - `stream=false`;
 - input e output máximos explícitos e estimativa abaixo do grant;
-- teto sugerido de US$ 0,01 para a chamada, sujeito a aprovação;
+- teto de US$ 0,10 por grant e US$ 0,25 por tarefa; o smoke mantém sua
+  estimativa máxima conservadora em US$ 0,01;
 - nenhum tool call, arquivo, web search ou ação externa.
 
 ## Sequência operacional

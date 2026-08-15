@@ -65,48 +65,12 @@
 - [x] 4.17 Validar rollback para `qwen3.8-max`
 - [x] 4.18 Registrar conclusão; promoção aprovada e rollback Qwen preservado
 
-## 5. Pendências da reserva técnica DeepSeek
+## 5. Trabalho posterior não bloqueante
 
-- [ ] 5.1 Registrar perfis, modelos, endpoints e billing modes sem credenciais
-- [ ] 5.2 Confirmar allowlist e termos vigentes do Token Plan Individual
-- [ ] 5.3 Confirmar modelos, saldo e endpoint de consulta DeepSeek direta
-- [ ] 5.4 Aprovar tetos diário, mensal, por grant e por tarefa
-- [ ] 5.5 Definir owners de aprovação, incidentes, reconciliação e revogação
-- [ ] 5.6 Separar credenciais e impedir herança/fallback implícito
-- [ ] 5.7 Normalizar erros QwenCloud sem depender apenas do status HTTP
-- [ ] 5.8 Adicionar `reserve_running`, `reserve_expired` e
-  `reserve_outcome_unknown`
-- [ ] 5.9 Estender schema para rota, grant, causa, modelo efetivo e custo direto
-- [ ] 5.10 Registrar tentativas e resultados idempotentemente
-- [ ] 5.11 Adicionar métricas por rota e alertas para ativação da reserva
-- [ ] 5.12 Criar painel sem prompts, segredos ou labels de alta cardinalidade
-- [ ] 5.13 Documentar consulta, auditoria e retenção das evidências
-- [ ] 5.14 Provar que autenticação, payload inválido e erro local não acionam reserva
-- [ ] 5.15 Provar uso único e atomicidade do grant sob concorrência
-- [ ] 5.16 Provar separação de credenciais, logs e billing modes
-- [ ] 5.17 Provar kill switch e rollback para `budget_blocked`
-- [ ] 5.18 Executar suíte completa, avaliação de perfis e revisão independente
-- [ ] 5.19 Executar shadow e revisar falsos positivos de elegibilidade
-- [ ] 5.20 Habilitar um perfil Flash com teto mínimo e aprovação por chamada
-
-## 6. Pendências do piloto OpenObserve
-
-- [ ] 6.1 Inventariar CPU, memória, disco, portas e redes disponíveis
-- [ ] 6.2 Definir fontes, atributos permitidos e retenção
-- [ ] 6.3 Fixar versão e revisar release notes, licença e vulnerabilidades
-- [ ] 6.4 Adicionar OpenObserve single-node com volume e credenciais próprios
-- [ ] 6.5 Adicionar OpenTelemetry Collector com healthcheck e limites
-- [ ] 6.6 Configurar redaction e fan-out para Phoenix e OpenObserve
-- [ ] 6.7 Manter portas em loopback e redes com privilégio mínimo
-- [ ] 6.8 Validar traces nos dois backends sem duplicação no produtor
-- [ ] 6.9 Ingerir logs e métricas por etapas e medir recursos
-- [ ] 6.10 Confirmar ausência de segredos e dados sensíveis
-- [ ] 6.11 Criar dashboards e healthcheck no Uptime Kuma
-- [ ] 6.12 Testar backup, restauração e rollback
-- [ ] 6.13 Comparar OpenObserve e Phoenix durante ao menos uma semana
-- [ ] 6.14 Registrar evidências e riscos residuais
-- [ ] 6.15 Decidir manter ambos, consolidar ou remover OpenObserve
-- [ ] 6.16 Avaliar HA somente em mudança OpenSpec posterior
+As pendências da reserva técnica DeepSeek são rastreadas exclusivamente em
+`add-deepseek-technical-reserve`. As pendências do piloto OpenObserve são
+rastreadas exclusivamente em `deploy-openobserve-homelab`. Nenhuma das duas
+frentes integra o aceite desta homologação concluída.
 
 ## 7. Higiene, arquivamento e decisão final
 

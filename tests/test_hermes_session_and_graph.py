@@ -1,14 +1,16 @@
 import json
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 import sqlite3
 import tempfile
 import unittest
-from unittest.mock import MagicMock
+from unittest.mock import ANY, MagicMock
 from orchestrator.adapters.hermes_cli import HermesRunResult
 from orchestrator.adapters.hermes_session import SQLiteHermesSessionStore
 from orchestrator.budget import BudgetEvidenceError, BudgetExceededError
 from orchestrator.graphs.hermes_agent import run_hermes_workflow
 from orchestrator.reserve_grants import ReserveGrantScope
+from orchestrator.reserve_ledger import ReserveAttemptStatus
 from orchestrator.reserve_budget import ReserveBudgetExceededError
 from orchestrator.deepseek_reserve_finance import (
     DeepSeekReserveExecutor,
@@ -94,7 +96,7 @@ class HermesAgentGraphTest(unittest.IsolatedAsyncioTestCase):
         )
 
     @staticmethod
-    def _grant_scope(task_id="FUTURE-05"):
+    def _grant_scope(task_id="FUTURE-05", *, expires_at=None):
         return ReserveGrantScope(
             grant_id="grant-1",
             task_id=task_id,
@@ -106,6 +108,7 @@ class HermesAgentGraphTest(unittest.IsolatedAsyncioTestCase):
             primary_failure_reason=(
                 PrimaryFailureReason.SUBSCRIPTION_CREDITS_EXHAUSTED
             ),
+            expires_at=expires_at or datetime.now(timezone.utc) + timedelta(minutes=5),
         )
 
     @staticmethod
@@ -121,7 +124,8 @@ class HermesAgentGraphTest(unittest.IsolatedAsyncioTestCase):
             provider.invoke_once.side_effect = error
         else:
             provider.invoke_once.return_value = ReserveProviderResult(
-                "deepseek-v4-flash", DeepSeekUsage(10, 20, 30), "reserve ok"
+                "deepseek-v4-flash", DeepSeekUsage(10, 20, 30), "reserve ok",
+                provider_request_id="chatcmpl-reserve-1",
             )
         executor = DeepSeekReserveExecutor(provider, MagicMock())
         return executor, provider
@@ -232,25 +236,38 @@ class HermesAgentGraphTest(unittest.IsolatedAsyncioTestCase):
         self.assertIsNone(result["session_id"])
         self.assertEqual(result["usage"], {})
 
-    async def test_graph_keeps_noneligible_failure_budget_blocked(self):
+    async def test_graph_keeps_security_and_local_failures_out_of_reserve(self):
         class InvalidPrimaryAdapter:
+            def __init__(self, reason):
+                self.reason = reason
+
             async def run_agent(self, profile, task, context, limits):
                 raise PrimaryRouteError(
-                    PrimaryFailureReason.AUTHENTICATION_FAILED,
-                    "primary authentication failed",
+                    self.reason,
+                    "provider detail must not authorize reserve",
                 )
 
-        result = await run_hermes_workflow(
-            InvalidPrimaryAdapter(),
-            "barclay",
-            "review",
-            task_id="FUTURE-03",
-            reserve_config=self._shadow_config(),
+        blocked_reasons = (
+            PrimaryFailureReason.AUTHENTICATION_FAILED,
+            PrimaryFailureReason.AUTHORIZATION_FAILED,
+            PrimaryFailureReason.INVALID_REQUEST,
+            PrimaryFailureReason.TOOL_ERROR,
+            PrimaryFailureReason.LOCAL_ERROR,
         )
+        for reason in blocked_reasons:
+            with self.subTest(reason=reason):
+                result = await run_hermes_workflow(
+                    InvalidPrimaryAdapter(reason),
+                    "barclay",
+                    "review",
+                    task_id="FUTURE-03",
+                    reserve_config=self._shadow_config(),
+                )
 
-        self.assertEqual(result["status"], "budget_blocked")
-        self.assertEqual(result["error"], "authentication_failed")
-        self.assertEqual(result["reserve_request"], {})
+                self.assertEqual(result["status"], "budget_blocked")
+                self.assertEqual(result["error"], reason.value)
+                self.assertEqual(result["reserve_request"], {})
+                self.assertEqual(result["reserve_grant_id"], "")
 
     async def test_graph_kill_switch_prevents_shadow_request(self):
         class ExhaustedPrimaryAdapter:
@@ -265,17 +282,24 @@ class HermesAgentGraphTest(unittest.IsolatedAsyncioTestCase):
             kill_switch_active=True,
             enabled_profiles=frozenset({"barclay"}),
         )
+        store = MagicMock()
+        executor, provider = self._reserve_executor()
         result = await run_hermes_workflow(
             ExhaustedPrimaryAdapter(),
             "barclay",
             "review",
             task_id="FUTURE-04",
             reserve_config=config,
+            reserve_grant_store=store,
+            reserve_budget_guard=self._budget_guard(),
+            reserve_executor=executor,
         )
 
         self.assertEqual(result["status"], "budget_blocked")
         self.assertEqual(result["error"], "subscription_credits_exhausted")
         self.assertEqual(result["reserve_request"], {})
+        store.consume_with_budget_and_cost.assert_not_called()
+        provider.invoke_once.assert_not_called()
 
     async def test_graph_rejects_unknown_reserve_decision(self):
         class UnusedAdapter:
@@ -297,6 +321,7 @@ class HermesAgentGraphTest(unittest.IsolatedAsyncioTestCase):
                 raise PrimaryRouteError(
                     PrimaryFailureReason.SUBSCRIPTION_CREDITS_EXHAUSTED,
                     "provider detail",
+                    session_id="qwen-session-1",
                 )
 
         store = MagicMock()
@@ -339,6 +364,18 @@ class HermesAgentGraphTest(unittest.IsolatedAsyncioTestCase):
             commitment,
             daily_limit_usd=budget_guard.daily_limit_usd,
             monthly_limit_usd=budget_guard.monthly_limit_usd,
+            attempt=store.consume_with_budget_and_cost.call_args.kwargs["attempt"],
+        )
+        attempt = store.consume_with_budget_and_cost.call_args.kwargs["attempt"]
+        self.assertEqual(attempt.attempt_id, "reserve:grant-1")
+        self.assertEqual(attempt.task_id, "FUTURE-05")
+        self.assertEqual(attempt.primary_session_id, "qwen-session-1")
+        store.finish_attempt.assert_called_once_with(
+            "reserve:grant-1",
+            ReserveAttemptStatus.COMPLETED,
+            effective_model="deepseek-v4-flash",
+            reserve_session_id="chatcmpl-reserve-1",
+            latency_ms=ANY,
         )
         budget_guard.check.assert_called_once_with(0.04)
         provider.invoke_once.assert_called_once_with("deepseek-v4-flash")
@@ -373,6 +410,38 @@ class HermesAgentGraphTest(unittest.IsolatedAsyncioTestCase):
                 )
                 self.assertEqual(result["status"], "reserve_denied")
         store.consume_with_budget_and_cost.assert_called_once()
+
+    async def test_graph_reports_expired_grant_without_consuming_it(self):
+        class ExhaustedPrimaryAdapter:
+            async def run_agent(self, profile, task, context, limits):
+                raise PrimaryRouteError(
+                    PrimaryFailureReason.SUBSCRIPTION_CREDITS_EXHAUSTED,
+                    "provider detail",
+                )
+
+        store = MagicMock()
+        executor, provider = self._reserve_executor()
+        result = await run_hermes_workflow(
+            ExhaustedPrimaryAdapter(),
+            "barclay",
+            "review",
+            task_id="FUTURE-05",
+            reserve_decision="approved",
+            reserve_config=self._enforced_config(),
+            reserve_grant_store=store,
+            reserve_grant_scope=self._grant_scope(
+                expires_at=datetime.now(timezone.utc) - timedelta(seconds=1)
+            ),
+            reserve_budget_guard=self._budget_guard(),
+            reserve_executor=executor,
+            reserve_max_input_tokens=1000,
+            reserve_max_output_tokens=1000,
+        )
+
+        self.assertEqual(result["status"], "reserve_expired")
+        self.assertEqual(result["error"], "technical reserve grant expired")
+        store.consume_with_budget_and_cost.assert_not_called()
+        provider.invoke_once.assert_not_called()
 
     async def test_budget_block_preserves_approved_grant(self):
         class ExhaustedPrimaryAdapter:
@@ -434,6 +503,11 @@ class HermesAgentGraphTest(unittest.IsolatedAsyncioTestCase):
 
         self.assertEqual(result["status"], "reserve_outcome_unknown")
         provider.invoke_once.assert_called_once_with("deepseek-v4-flash")
+        store.finish_attempt.assert_called_once_with(
+            "reserve:grant-1",
+            ReserveAttemptStatus.OUTCOME_UNKNOWN,
+            latency_ms=ANY,
+        )
 
     async def test_shadow_approval_never_consumes_grant(self):
         class ExhaustedPrimaryAdapter:

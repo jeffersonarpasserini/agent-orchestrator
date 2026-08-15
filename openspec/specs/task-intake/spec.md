@@ -1,7 +1,8 @@
 # task-intake Specification
 
 ## Purpose
-TBD - created by archiving change add-canonical-task-intake. Update Purpose after archive.
+Definir a entrada canônica, autenticada, idempotente e auditável de tarefas no
+orquestrador, mantendo identidade e autoridade fora do conteúdo não confiável.
 ## Requirements
 ### Requirement: Entrada canônica autentica identidade fora do payload
 

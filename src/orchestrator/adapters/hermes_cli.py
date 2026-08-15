@@ -212,7 +212,14 @@ class HermesCliAdapter:
     def _safe_environment(self):
         environment = dict(self._base_environment)
         for key in list(environment):
-            if key.upper() == "OPENAI_API_KEY":
+            normalized = key.upper()
+            if (
+                normalized == "OPENAI_API_KEY"
+                or normalized.endswith("_API_KEY")
+                or normalized.endswith("_ACCESS_TOKEN")
+                or normalized.endswith("_BEARER_TOKEN")
+                or normalized.endswith("_DATABASE_URL")
+            ):
                 environment.pop(key, None)
         environment["HERMES_INTERACTIVE"] = "0"
         environment.pop("HERMES_YOLO_MODE", None)

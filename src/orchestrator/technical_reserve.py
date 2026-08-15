@@ -46,9 +46,66 @@ class ReserveDecision(StrEnum):
 
 
 class PrimaryRouteError(RuntimeError):
-    def __init__(self, reason: PrimaryFailureReason, message: str) -> None:
+    def __init__(
+        self,
+        reason: PrimaryFailureReason,
+        message: str,
+        *,
+        session_id: str | None = None,
+    ) -> None:
         super().__init__(message)
         self.reason = reason
+        self.session_id = session_id
+
+
+@dataclass(frozen=True)
+class QwenCloudErrorEvidence:
+    http_status: int | None = None
+    provider_code: str = ""
+    provider_message: str = ""
+    quota_depleted_confirmed: bool = False
+
+
+def normalize_qwencloud_error(
+    evidence: QwenCloudErrorEvidence,
+) -> PrimaryFailureReason:
+    code = evidence.provider_code.strip().lower()
+    message = " ".join(evidence.provider_message.strip().lower().split())
+    if code in {"invalidapikey", "invalid_access_token"} or (
+        evidence.http_status == 401
+        and ("api key" in message or "access token" in message)
+    ):
+        return PrimaryFailureReason.AUTHENTICATION_FAILED
+    if code in {"accessdenied", "access_denied", "accessdenied.unpurchased"}:
+        return PrimaryFailureReason.AUTHORIZATION_FAILED
+    if "model not exist" in message or "not found or not supported" in message:
+        return PrimaryFailureReason.MODEL_UNAVAILABLE
+    if code == "invalidparameter" or evidence.http_status == 400:
+        return PrimaryFailureReason.INVALID_REQUEST
+    if any(
+        marker in message
+        for marker in (
+            "hour allocated quota exceeded",
+            "week allocated quota exceeded",
+            "month allocated quota exceeded",
+        )
+    ):
+        return PrimaryFailureReason.SUBSCRIPTION_WINDOW_EXHAUSTED
+    if evidence.quota_depleted_confirmed and (
+        code in {"throttling.allocationquota", "insufficient_quota"}
+        or "allocated quota exceeded" in message
+        or "exceeded your current quota" in message
+    ):
+        return PrimaryFailureReason.SUBSCRIPTION_CREDITS_EXHAUSTED
+    if (
+        "concurrency allocated quota exceeded" in message
+        or "usage allocated quota exceeded" in message
+        or "requests rate limit exceeded" in message
+    ):
+        return PrimaryFailureReason.SUBSCRIPTION_CAPACITY_UNAVAILABLE
+    if evidence.http_status == 429:
+        return PrimaryFailureReason.FINANCIAL_EVIDENCE_UNAVAILABLE
+    return PrimaryFailureReason.LOCAL_ERROR
 
 
 @dataclass(frozen=True)
