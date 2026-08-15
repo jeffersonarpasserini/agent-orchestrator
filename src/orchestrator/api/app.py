@@ -7,14 +7,23 @@ from typing import Callable
 
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from fastapi.responses import HTMLResponse
 from opentelemetry.trace import Status, StatusCode
 from pydantic import BaseModel
 
+from orchestrator.agent_team import (
+    AGENT_POLICIES,
+    PARALLEL_IMPLEMENTATION_WORKFLOW,
+    RESERVE_OWNERS,
+    SPEC_REVIEW_WORKFLOW,
+)
 from orchestrator.budget import BudgetError, DeepSeekBudgetGuard
 from orchestrator.database import check_database
 from orchestrator.graphs.smoke import run_smoke_workflow
 from orchestrator.pilot_metrics import PostgresPilotMetricsStore
 from orchestrator.pilot_summary import summarize_pilot
+from orchestrator.reserve_ledger import PostgresReserveLedger
+from orchestrator.reserve_dashboard import render_reserve_dashboard
 from orchestrator.settings import Settings
 from orchestrator.task_intake import (
     InvalidTaskTransitionError,
@@ -37,6 +46,7 @@ def create_app(
     budget_guard: DeepSeekBudgetGuard | None = None,
     metrics_store: PostgresPilotMetricsStore | None = None,
     task_store: TaskStore | None = None,
+    reserve_ledger: PostgresReserveLedger | None = None,
     database_checker: Callable[[Settings], dict[str, str]] = check_database,
 ) -> FastAPI:
     guard = budget_guard or DeepSeekBudgetGuard(
@@ -47,6 +57,7 @@ def create_app(
     )
     store = metrics_store or PostgresPilotMetricsStore(settings.database_url)
     intake_store = task_store or PostgresTaskStore(settings.database_url)
+    reserve_store = reserve_ledger or PostgresReserveLedger(settings.database_url)
     bearer = HTTPBearer(auto_error=False)
 
     def authenticated_principal(
@@ -148,6 +159,57 @@ def create_app(
             "simulated_cost_usd": summary.simulated_cost_usd,
             "billed_cost_usd": summary.billed_cost_usd,
             "subscription_savings_usd": summary.subscription_savings_usd,
+        }
+
+    @app.get("/reserve/metrics")
+    def reserve_metrics() -> dict[str, object]:
+        try:
+            snapshot = reserve_store.metrics_snapshot()
+        except Exception as exc:
+            raise HTTPException(
+                status_code=503, detail="reserve metrics unavailable"
+            ) from exc
+        return {
+            "billing_route": "deepseek_reserve",
+            "total_activations": snapshot.total_activations,
+            "status_counts": dict(snapshot.status_counts),
+            "model_counts": dict(snapshot.model_counts),
+            "direct_cost_usd": snapshot.direct_cost_usd,
+            "tokens": {
+                "prompt_cache_hit": snapshot.prompt_cache_hit_tokens,
+                "prompt_cache_miss": snapshot.prompt_cache_miss_tokens,
+                "completion": snapshot.completion_tokens,
+            },
+            "alert_required": snapshot.total_activations > 0,
+        }
+
+    @app.get("/reserve/dashboard", response_class=HTMLResponse)
+    def reserve_dashboard() -> str:
+        try:
+            return render_reserve_dashboard(reserve_store.metrics_snapshot())
+        except Exception as exc:
+            raise HTTPException(
+                status_code=503, detail="reserve dashboard unavailable"
+            ) from exc
+
+    @app.get("/team/agents")
+    def team_agents() -> dict[str, object]:
+        return {
+            "agents": [
+                AGENT_POLICIES[profile].public_dict()
+                for profile in sorted(AGENT_POLICIES)
+            ]
+        }
+
+    @app.get("/team/workflows")
+    def team_workflows() -> dict[str, object]:
+        return {
+            "spec_review": [asdict(step) for step in SPEC_REVIEW_WORKFLOW],
+            "parallel_implementation": [
+                asdict(step) for step in PARALLEL_IMPLEMENTATION_WORKFLOW
+            ],
+            "reserve_owners": RESERVE_OWNERS,
+            "dispatches_agents": False,
         }
 
     @app.post("/workflows/smoke")

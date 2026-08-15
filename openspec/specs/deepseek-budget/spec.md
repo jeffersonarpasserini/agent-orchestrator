@@ -1,7 +1,8 @@
 # deepseek-budget Specification
 
 ## Purpose
-TBD - created by archiving change enforce-deepseek-pilot-budget. Update Purpose after archive.
+Definir o gate financeiro fail-closed do piloto DeepSeek original, com tetos
+persistidos e bloqueio anterior a qualquer chamada ao provedor.
 ## Requirements
 ### Requirement: Chamadas DeepSeek respeitam os tetos aprovados
 

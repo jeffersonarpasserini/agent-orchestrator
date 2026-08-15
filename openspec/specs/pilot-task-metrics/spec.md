@@ -1,7 +1,8 @@
 # pilot-task-metrics Specification
 
 ## Purpose
-TBD - created by archiving change record-pilot-task-metrics. Update Purpose after archive.
+Definir o ledger idempotente de métricas das tarefas piloto, incluindo a
+separação auditável entre custo simulado e custo efetivamente cobrado.
 ## Requirements
 ### Requirement: Métricas são agregadas por tarefa piloto
 

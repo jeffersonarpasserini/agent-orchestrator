@@ -1,0 +1,2 @@
+date,day,openobserve_status,phoenix_status,collector_status,openobserve_memory_mib,phoenix_memory_mib,collector_memory_mib,openobserve_cpu_pct,phoenix_cpu_pct,collector_cpu_pct,trace_fanout,redaction,backup_restore,notes
+2026-08-15,1,healthy,healthy,healthy,237.9,383.2,31.61,0.14,0.15,0.02,pass,pass,pass,"Pilot activated; synthetic traces in both backends; staged logs and metrics accepted; dashboard and Uptime Kuma monitor active"

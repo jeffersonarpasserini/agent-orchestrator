@@ -75,6 +75,37 @@ class HermesCliAdapterTest(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(asyncio.CancelledError):
             await HermesCliAdapter(runner=runner).run_agent("spock", "task")
 
+    async def test_subprocess_does_not_inherit_provider_tokens_or_database_urls(self):
+        captured = {}
+
+        async def runner(command, environment, *_):
+            captured.update(environment)
+            if "fallback" in command:
+                return ProcessOutput(0, "No fallback providers configured.", "")
+            return ProcessOutput(0, "ok", "")
+
+        adapter = HermesCliAdapter(
+            runner=runner,
+            base_environment={
+                "PATH": "/bin",
+                "DEEPSEEK_API_KEY": "direct-secret",
+                "ALIBABA_ACCESS_TOKEN": "primary-secret",
+                "TASK_INTAKE_BEARER_TOKEN": "intake-secret",
+                "ORCHESTRATOR_DATABASE_URL": "postgresql://private",
+            },
+        )
+
+        await adapter.run_agent("spock", "task")
+
+        self.assertEqual(captured["PATH"], "/bin")
+        for secret in (
+            "DEEPSEEK_API_KEY",
+            "ALIBABA_ACCESS_TOKEN",
+            "TASK_INTAKE_BEARER_TOKEN",
+            "ORCHESTRATOR_DATABASE_URL",
+        ):
+            self.assertNotIn(secret, captured)
+
     def test_rejects_profile_argument_injection(self):
         with self.assertRaises(HermesSecurityError):
             HermesCliAdapter().build_command("spock --yolo", "task", None, AgentLimits())

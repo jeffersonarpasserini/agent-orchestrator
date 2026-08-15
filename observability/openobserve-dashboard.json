@@ -1,0 +1,49 @@
+{
+  "dashboardId": "7494459516637937664",
+  "title": "agent-orchestrator-pilot",
+  "description": "Pilot: spans/min, errors, p95 duration and traces by agent profile",
+  "tabs": [
+    {
+      "tabId": "overview",
+      "name": "Overview",
+      "panels": [
+        {
+          "id": "spans-per-minute",
+          "type": "line",
+          "title": "Spans per minute",
+          "description": "Trace throughput received by OpenObserve",
+          "config": {"show_legends": false},
+          "layout": {"x": 0, "y": 0, "w": 96, "h": 12, "i": 0},
+          "queries": [{"customQuery": true, "query": "SELECT histogram(_timestamp, '1 minute') AS minute, COUNT(*) AS spans FROM \"agent_orchestrator_pilot\" GROUP BY minute ORDER BY minute", "fields": {"stream": "agent_orchestrator_pilot", "stream_type": "traces", "x": [{"label": "minute", "alias": "minute", "column": "minute"}], "y": [{"label": "spans", "alias": "spans", "column": "spans"}], "z": [], "filter": {"type": "list", "values": [], "logicalOperator": "AND", "filterType": "list"}}, "config": {"promql_legend": ""}}]
+        },
+        {
+          "id": "errors-by-type",
+          "type": "bar",
+          "title": "Errors by type",
+          "description": "Low-cardinality error types only",
+          "config": {"show_legends": false},
+          "layout": {"x": 96, "y": 0, "w": 96, "h": 12, "i": 1},
+          "queries": [{"customQuery": true, "query": "SELECT error_type, COUNT(*) AS errors FROM \"agent_orchestrator_pilot\" WHERE error_type IS NOT NULL GROUP BY error_type ORDER BY errors DESC", "fields": {"stream": "agent_orchestrator_pilot", "stream_type": "traces", "x": [{"label": "error_type", "alias": "error_type", "column": "error_type"}], "y": [{"label": "errors", "alias": "errors", "column": "errors"}], "z": [], "filter": {"type": "list", "values": [], "logicalOperator": "AND", "filterType": "list"}}, "config": {"promql_legend": ""}}]
+        },
+        {
+          "id": "p95-duration",
+          "type": "metric",
+          "title": "P95 duration",
+          "description": "95th percentile trace duration",
+          "config": {"show_legends": false, "unit": "microseconds"},
+          "layout": {"x": 0, "y": 12, "w": 96, "h": 10, "i": 2},
+          "queries": [{"customQuery": true, "query": "SELECT approx_percentile_cont(duration, 0.95) AS p95_duration FROM \"agent_orchestrator_pilot\"", "fields": {"stream": "agent_orchestrator_pilot", "stream_type": "traces", "x": [], "y": [{"label": "p95_duration", "alias": "p95_duration", "column": "p95_duration"}], "z": [], "filter": {"type": "list", "values": [], "logicalOperator": "AND", "filterType": "list"}}, "config": {"promql_legend": ""}}]
+        },
+        {
+          "id": "traces-by-agent",
+          "type": "bar",
+          "title": "Traces by agent profile",
+          "description": "Trace distribution using the approved agent profile dimension",
+          "config": {"show_legends": false},
+          "layout": {"x": 96, "y": 12, "w": 96, "h": 10, "i": 3},
+          "queries": [{"customQuery": true, "query": "SELECT agent_profile, COUNT(*) AS traces FROM \"agent_orchestrator_pilot\" WHERE agent_profile IS NOT NULL GROUP BY agent_profile ORDER BY traces DESC", "fields": {"stream": "agent_orchestrator_pilot", "stream_type": "traces", "x": [{"label": "agent_profile", "alias": "agent_profile", "column": "agent_profile"}], "y": [{"label": "traces", "alias": "traces", "column": "traces"}], "z": [], "filter": {"type": "list", "values": [], "logicalOperator": "AND", "filterType": "list"}}, "config": {"promql_legend": ""}}]
+        }
+      ]
+    }
+  ]
+}

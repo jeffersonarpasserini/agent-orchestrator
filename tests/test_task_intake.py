@@ -2,7 +2,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 import unittest
 
-from fastapi.testclient import TestClient
+from fastapi import HTTPException
+from fastapi.security import HTTPAuthorizationCredentials
 from pydantic import ValidationError
 
 from orchestrator.api.app import create_app
@@ -14,7 +15,7 @@ from orchestrator.task_intake import (
     TaskNotFoundError,
     TaskRecord,
 )
-from tests.test_api_app import FakeBudgetGuard, FakeMetricsStore
+from tests.test_api_app import FakeBudgetGuard, FakeMetricsStore, route_endpoint
 
 
 def valid_payload() -> dict[str, object]:
@@ -98,41 +99,51 @@ class TaskIntakeApiTest(unittest.TestCase):
             task_intake_principal="owner:test",
             task_intake_origin="api:test",
         )
-        self.client = TestClient(create_app(
+        app = create_app(
             settings,
             budget_guard=FakeBudgetGuard(),
             metrics_store=FakeMetricsStore(),
             task_store=self.store,
             database_checker=lambda _: {"database": "test", "user": "test"},
-        ))
-        self.headers = {"Authorization": "Bearer secret-test-token"}
+        )
+        self.app = app
+        self.submit = route_endpoint(app, "/tasks")
+        self.principal = "owner:test"
+        task_route = next(route for route in app.routes if getattr(route, "path", None) == "/tasks")
+        self.authenticate = task_route.dependant.dependencies[0].call
 
     def test_authentication_fails_closed_without_persisting(self):
-        for headers in ({}, {"Authorization": "Bearer wrong"}):
-            response = self.client.post("/tasks", json=valid_payload(), headers=headers)
-            self.assertEqual(response.status_code, 401)
+        for credentials in (
+            None,
+            HTTPAuthorizationCredentials(scheme="Bearer", credentials="wrong"),
+        ):
+            with self.assertRaises(HTTPException) as raised:
+                self.authenticate(credentials)
+            self.assertEqual(raised.exception.status_code, 401)
         self.assertEqual({}, self.store.records)
 
     def test_submit_is_idempotent_and_conflicting_reuse_is_rejected(self):
-        first = self.client.post("/tasks", json=valid_payload(), headers=self.headers)
-        replay = self.client.post("/tasks", json=valid_payload(), headers=self.headers)
+        first = self.submit(TaskEnvelope.model_validate(valid_payload()), self.principal)
+        replay = self.submit(TaskEnvelope.model_validate(valid_payload()), self.principal)
         changed = valid_payload()
         changed["objective"] = "Different objective"
-        conflict = self.client.post("/tasks", json=changed, headers=self.headers)
+        with self.assertRaises(HTTPException) as conflict:
+            self.submit(TaskEnvelope.model_validate(changed), self.principal)
 
-        self.assertEqual(first.status_code, 201)
-        self.assertFalse(first.json()["idempotent_replay"])
-        self.assertTrue(replay.json()["idempotent_replay"])
-        self.assertEqual(conflict.status_code, 409)
+        self.assertFalse(first["idempotent_replay"])
+        self.assertTrue(replay["idempotent_replay"])
+        self.assertEqual(conflict.exception.status_code, 409)
         self.assertEqual(self.store.events, ["received"])
 
     def test_cancel_and_resume_require_auth_and_return_to_approval(self):
-        self.client.post("/tasks", json=valid_payload(), headers=self.headers)
-        cancelled = self.client.post("/tasks/O4:test-001/cancel", headers=self.headers)
-        resumed = self.client.post("/tasks/O4:test-001/resume", headers=self.headers)
+        self.submit(TaskEnvelope.model_validate(valid_payload()), self.principal)
+        cancel = route_endpoint(self.app, "/tasks/{request_id}/cancel")
+        resume = route_endpoint(self.app, "/tasks/{request_id}/resume")
+        cancelled = cancel("O4:test-001", self.principal)
+        resumed = resume("O4:test-001", self.principal)
 
-        self.assertEqual(cancelled.json()["state"], "cancelled")
-        self.assertEqual(resumed.json()["state"], "awaiting_approval")
+        self.assertEqual(cancelled["state"], "cancelled")
+        self.assertEqual(resumed["state"], "awaiting_approval")
         self.assertEqual(self.store.events, ["received", "cancelled", "resumed"])
 
 

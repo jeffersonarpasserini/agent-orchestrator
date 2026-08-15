@@ -6,15 +6,48 @@ from orchestrator.technical_reserve import (
     MODEL_ROUTES,
     PrimaryFailureReason,
     PrimaryRouteError,
+    QwenCloudErrorEvidence,
     ReserveDisposition,
     ReserveMode,
     TechnicalReserveConfig,
     build_shadow_request,
     reserve_disposition,
+    normalize_qwencloud_error,
 )
 
 
 class TechnicalReserveConfigTest(unittest.TestCase):
+    def test_normalizes_only_structured_qwencloud_quota_evidence(self):
+        cases = (
+            (QwenCloudErrorEvidence(401, "InvalidApiKey", "Invalid API-key"),
+             PrimaryFailureReason.AUTHENTICATION_FAILED),
+            (QwenCloudErrorEvidence(400, "InvalidParameter", "bad input"),
+             PrimaryFailureReason.INVALID_REQUEST),
+            (QwenCloudErrorEvidence(429, "", "hour allocated quota exceeded"),
+             PrimaryFailureReason.SUBSCRIPTION_WINDOW_EXHAUSTED),
+            (QwenCloudErrorEvidence(429, "", "concurrency allocated quota exceeded"),
+             PrimaryFailureReason.SUBSCRIPTION_CAPACITY_UNAVAILABLE),
+            (QwenCloudErrorEvidence(
+                429, "insufficient_quota", "You exceeded your current quota",
+                quota_depleted_confirmed=True,
+            ), PrimaryFailureReason.SUBSCRIPTION_CREDITS_EXHAUSTED),
+        )
+        for evidence, expected in cases:
+            with self.subTest(evidence=evidence):
+                self.assertEqual(normalize_qwencloud_error(evidence), expected)
+
+    def test_bare_429_and_ambiguous_quota_never_authorize_reserve(self):
+        for evidence in (
+            QwenCloudErrorEvidence(http_status=429),
+            QwenCloudErrorEvidence(
+                429, "insufficient_quota", "You exceeded your current quota"
+            ),
+        ):
+            reason = normalize_qwencloud_error(evidence)
+            self.assertEqual(
+                reason, PrimaryFailureReason.FINANCIAL_EVIDENCE_UNAVAILABLE
+            )
+            self.assertEqual(reserve_disposition(reason), ReserveDisposition.BLOCKED)
     def test_defaults_to_off_with_kill_switch(self):
         with patch.dict(os.environ, {}, clear=True):
             config = TechnicalReserveConfig.from_env()
@@ -41,8 +74,8 @@ class TechnicalReserveConfigTest(unittest.TestCase):
             "DEEPSEEK_RESERVE_MODE": "enforced",
             "DEEPSEEK_RESERVE_KILL_SWITCH": "false",
             "DEEPSEEK_RESERVE_PROFILES": "barclay",
-            "DEEPSEEK_RESERVE_DAILY_BUDGET_USD": "0.25",
-            "DEEPSEEK_RESERVE_MONTHLY_BUDGET_USD": "2.00",
+            "DEEPSEEK_RESERVE_DAILY_BUDGET_USD": "1.00",
+            "DEEPSEEK_RESERVE_MONTHLY_BUDGET_USD": "10.00",
         }
         with patch.dict(os.environ, environment, clear=True):
             config = TechnicalReserveConfig.from_env()
@@ -166,6 +199,7 @@ class TechnicalReserveConfigTest(unittest.TestCase):
         error = PrimaryRouteError(
             PrimaryFailureReason.SUBSCRIPTION_WINDOW_EXHAUSTED,
             "Token Plan window exhausted",
+            session_id="qwen-session-1",
         )
 
         self.assertEqual(
@@ -173,6 +207,7 @@ class TechnicalReserveConfigTest(unittest.TestCase):
             PrimaryFailureReason.SUBSCRIPTION_WINDOW_EXHAUSTED,
         )
         self.assertEqual(str(error), "Token Plan window exhausted")
+        self.assertEqual(error.session_id, "qwen-session-1")
 
 
 if __name__ == "__main__":
